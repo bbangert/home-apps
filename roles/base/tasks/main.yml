@@ -1,0 +1,120 @@
+---
+- name: Validate static networking inputs
+  ansible.builtin.assert:
+    that:
+      - homestar_primary_interface is defined
+      - homestar_ipv4_addresses is defined
+      - homestar_ipv4_addresses | length > 0
+      - homestar_gateway_ipv4 is defined
+      - homestar_dns_servers is defined
+      - homestar_dns_servers | length > 0
+    fail_msg: >-
+      Static networking requires homestar_primary_interface, homestar_ipv4_addresses,
+      homestar_gateway_ipv4, and homestar_dns_servers.
+  when: base_manage_networking | bool
+
+- name: Disable cloud-init network management
+  ansible.builtin.copy:
+    dest: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+    content: |
+      network: {config: disabled}
+    owner: root
+    group: root
+    mode: "0644"
+  when: base_manage_networking | bool
+
+- name: Render homestar netplan
+  ansible.builtin.template:
+    src: homestar-netplan.yaml.j2
+    dest: "{{ base_netplan_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: base_manage_networking | bool
+  notify: validate and apply netplan
+
+- name: Remove installer netplan once static config is managed
+  ansible.builtin.file:
+    path: /etc/netplan/50-cloud-init.yaml
+    state: absent
+  when: base_manage_networking | bool
+  notify: validate and apply netplan
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ base_core_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: base_apply_baseline | bool
+
+- name: Ensure baseline directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ base_base_directories }}"
+  when: base_apply_baseline | bool
+
+- name: Ensure chrony is enabled
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: true
+  when: base_apply_baseline | bool
+
+- name: Allow passwordless sudo for the remote admin user
+  ansible.builtin.copy:
+    dest: "{{ base_passwordless_sudo_path }}"
+    content: |
+      {{ base_passwordless_sudo_user }} ALL=(ALL:ALL) NOPASSWD:ALL
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "{{ base_visudo_path }} -cf %s"
+  when:
+    - base_apply_baseline | bool
+    - base_manage_passwordless_sudo | bool
+
+- name: Install controller SSH key for the remote admin user
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: "{{ lookup('file', base_controller_public_key_file) }}"
+  when:
+    - base_apply_baseline | bool
+    - base_manage_controller_authorized_key | bool
+
+- name: Allow SSH through ufw
+  community.general.ufw:
+    rule: allow
+    port: "{{ ansible_port | default(22) }}"
+    proto: tcp
+  when:
+    - base_apply_baseline | bool
+    - base_manage_firewall | bool
+
+- name: Set ufw default incoming policy
+  community.general.ufw:
+    direction: incoming
+    default: deny
+  when:
+    - base_apply_baseline | bool
+    - base_manage_firewall | bool
+
+- name: Set ufw default outgoing policy
+  community.general.ufw:
+    direction: outgoing
+    default: allow
+  when:
+    - base_apply_baseline | bool
+    - base_manage_firewall | bool
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+  when:
+    - base_apply_baseline | bool
+    - base_manage_firewall | bool

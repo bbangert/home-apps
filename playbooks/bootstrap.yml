@@ -1,0 +1,53 @@
+---
+- name: Ensure Python is available on the freshly installed host
+  hosts: epyc
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install Python if the installer image omitted it
+      ansible.builtin.raw: test -x /usr/bin/python3 || (apt-get update && apt-get install -y python3 python3-apt sudo)
+      changed_when: false
+
+- name: Converge epyc networking from DHCP to the planned static addresses
+  hosts: epyc
+  gather_facts: true
+  become: true
+  roles:
+    - role: base
+      vars:
+        base_apply_baseline: false
+        base_manage_networking: true
+  tasks:
+    - name: Flush networking handlers before reconnecting
+      ansible.builtin.meta: flush_handlers
+
+- name: Wait for epyc on the final static address
+  hosts: localhost
+  gather_facts: false
+  become: false
+  vars:
+    ansible_connection: local
+    ansible_become: false
+    bootstrap_target: epyc
+  tasks:
+    - name: Wait for SSH to return on the final address
+      ansible.builtin.wait_for:
+        host: "{{ hostvars[bootstrap_target].bootstrap_final_ssh_host }}"
+        port: "{{ hostvars[bootstrap_target].ansible_port | default(22) }}"
+        delay: 5
+        timeout: 180
+
+- name: Apply the base operating-system baseline using the canonical address
+  hosts: epyc
+  gather_facts: true
+  become: true
+  vars:
+    ansible_host: "{{ bootstrap_final_ssh_host }}"
+  roles:
+    - role: base
+      vars:
+        base_apply_baseline: true
+        base_manage_networking: false
+  tasks:
+    - name: Verify the host is reachable after bootstrap
+      ansible.builtin.ping:

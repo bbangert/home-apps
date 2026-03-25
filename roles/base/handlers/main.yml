@@ -1,0 +1,13 @@
+---
+- name: Validate rendered netplan
+  listen: validate and apply netplan
+  ansible.builtin.command: netplan generate
+  changed_when: false
+
+- name: Apply rendered netplan asynchronously
+  listen: validate and apply netplan
+  when: not ansible_check_mode
+  ansible.builtin.shell: sleep 2 && netplan apply
+  async: 45
+  poll: 0
+  changed_when: true

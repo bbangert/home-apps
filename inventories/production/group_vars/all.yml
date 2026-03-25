@@ -1,0 +1,71 @@
+---
+homestar_gateway_ipv4: 192.168.2.1
+homestar_dns_servers:
+  - 192.168.2.1
+
+homestar_domains:
+  - groovie.org
+  - ofcode.org
+
+nomad_datacenter: homestar
+onepassword_vault: HomeCluster
+tunnel_id: your-tunnel-id
+caddy_ip: 192.168.2.35
+
+all_apps:
+  - zone: groovie.org
+    name: auth
+  - zone: groovie.org
+    name: photos
+  - zone: groovie.org
+    name: files
+  - zone: groovie.org
+    name: plex
+  - zone: groovie.org
+    name: link
+  - zone: groovie.org
+    name: sh
+  - zone: groovie.org
+    name: music-assistant
+  - zone: groovie.org
+    name: sonarr
+  - zone: groovie.org
+    name: radarr
+  - zone: groovie.org
+    name: lidarr
+  - zone: groovie.org
+    name: prowlarr
+  - zone: groovie.org
+    name: sabnzbd
+  - zone: groovie.org
+    name: komga
+  - zone: groovie.org
+    name: calibre-web
+  - zone: groovie.org
+    name: freshrss
+  - zone: groovie.org
+    name: thelounge
+  - zone: groovie.org
+    name: vaultwarden
+  - zone: groovie.org
+    name: unifi
+  - zone: groovie.org
+    name: frigate
+  - zone: groovie.org
+    name: beszel
+  - zone: groovie.org
+    name: windmill
+  - zone: ofcode.org
+    name: paste
+
+public_apps:
+  - zone: groovie.org
+    name: auth
+  - zone: ofcode.org
+    name: paste
+
+onepassword_item_paths:
+  cloudflare_api_token: op://HomeCluster/cloudflare/API_TOKEN
+  postgres_superuser_password: op://HomeCluster/cloudnative-pg/POSTGRES_SUPER_PASS
+  opnsense_api_key: op://HomeCluster/opnsense/API_KEY
+  opnsense_api_secret: op://HomeCluster/opnsense/API_SECRET

@@ -1,0 +1,10 @@
+---
+homestar_node_role: nomad_server
+bootstrap_final_ssh_host: 192.168.2.35
+homestar_manage_static_network: true
+homestar_primary_interface: enp6s0f1
+homestar_ipv4_addresses:
+  - 192.168.2.35/24
+  - 192.168.2.202/24
+homestar_service_ip: 192.168.2.35
+homestar_unifi_ip: 192.168.2.202

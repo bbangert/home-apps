@@ -1,0 +1,17 @@
+network:
+  version: 2
+  ethernets:
+    {{ homestar_primary_interface }}:
+      dhcp4: false
+      addresses:
+{% for address in homestar_ipv4_addresses %}
+        - {{ address }}
+{% endfor %}
+      routes:
+        - to: default
+          via: {{ homestar_gateway_ipv4 }}
+      nameservers:
+        addresses:
+{% for nameserver in homestar_dns_servers %}
+          - {{ nameserver }}
+{% endfor %}
