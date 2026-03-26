@@ -9,6 +9,8 @@ homestar_ipv4_addresses:
 homestar_service_ip: 192.168.2.35
 homestar_unifi_ip: 192.168.2.202
 
+docker_install_gcloud: true
+
 base_extra_firewall_ports:
   - { port: "8443", proto: tcp }
   - { port: "8080", proto: tcp }
@@ -37,6 +39,10 @@ nomad_host_volumes:
     path: /srv/vaultwarden/config
   - name: linkwarden-config
     path: /srv/linkwarden/config
+  - name: thelounge-config
+    path: /srv/thelounge/config
+  - name: duketogo-config
+    path: /srv/duketogo/config
 
 caddy_routes:
   - hostname: auth.groovie.org
@@ -51,3 +57,9 @@ caddy_routes:
     backend: localhost:8081
   - hostname: link.groovie.org
     backend: localhost:3000
+  - hostname: thelounge.groovie.org
+    backend: localhost:9090
+  - hostname: sh.groovie.org
+    backend: localhost:8888
+  - hostname: paste.ofcode.org
+    backend: localhost:6543

@@ -63,6 +63,10 @@ all_apps:
 public_apps:
   - zone: groovie.org
     name: auth
+  - zone: groovie.org
+    name: photos
+  - zone: groovie.org
+    name: link
   - zone: ofcode.org
     name: paste
 

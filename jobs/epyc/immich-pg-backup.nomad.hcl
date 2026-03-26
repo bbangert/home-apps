@@ -63,5 +63,37 @@ EOF
         memory = 512
       }
     }
+
+    task "s3-upload" {
+      driver = "docker"
+
+      lifecycle {
+        hook = "poststop"
+      }
+
+      config {
+        image        = "amazon/aws-cli:latest"
+        volumes      = ["/mnt/backups/immich-pg:/backups:ro"]
+        entrypoint   = ["/bin/sh"]
+        args         = ["-c", "aws s3 sync /backups/ s3://homestar-cloudnative-pg/immich-pg-dumps/ --exclude '*' --include '*.dump'"]
+      }
+
+      template {
+        data        = <<EOF
+{{ with nomadVar "nomad/jobs/immich-pg-backup" -}}
+AWS_ACCESS_KEY_ID={{ .AWS_ACCESS_KEY_ID }}
+AWS_SECRET_ACCESS_KEY={{ .AWS_SECRET_ACCESS_KEY }}
+{{- end }}
+AWS_DEFAULT_REGION=us-east-1
+EOF
+        destination = "secrets/aws.env"
+        env         = true
+      }
+
+      resources {
+        cpu    = 256
+        memory = 256
+      }
+    }
   }
 }

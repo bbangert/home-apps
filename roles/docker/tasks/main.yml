@@ -60,3 +60,28 @@
     name: "{{ ansible_user }}"
     groups: docker
     append: true
+
+- name: Add Google Cloud SDK GPG key
+  ansible.builtin.get_url:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    dest: /etc/apt/keyrings/google-cloud.asc
+    owner: root
+    group: root
+    mode: "0644"
+  when: docker_install_gcloud | bool
+
+- name: Add Google Cloud SDK apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/google-cloud.asc]
+      https://packages.cloud.google.com/apt cloud-sdk main
+    state: present
+    filename: google-cloud-sdk
+  when: docker_install_gcloud | bool
+
+- name: Install Google Cloud CLI
+  ansible.builtin.apt:
+    name: google-cloud-cli
+    state: present
+    update_cache: true
+  when: docker_install_gcloud | bool

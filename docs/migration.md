@@ -64,8 +64,7 @@ goes down, its apps are down until the node comes back — that's fine for a hom
 │ Immich+PG+ML │      │ Komga + Komf     │      │ Radarr        │
 │ Authentik    │      │ Calibre-Web      │      │ Lidarr        │
 │ Valkey       │      │ OCIS             │      │ SABnzbd       │
-│ Windmill     │      │ Music Assistant  │      │ Prowlarr      │
-│ Linkwarden   │      │ Beszel hub       │      │               │
+│ Linkwarden   │      │ Music Assistant  │      │ Prowlarr      │
 │ FreshRSS     │      │                  │      │               │
 │ Atuin        │      │                  │      │               │
 │ TheLounge    │      │                  │      │               │
@@ -74,6 +73,8 @@ goes down, its apps are down until the node comes back — that's fine for a hom
 │ DukeTogo     │      │                  │      │               │
 │ Paste        │      │                  │      │               │
 │ SMTP Relay   │      │                  │      │               │
+│ VictoriaM.   │      │                  │      │               │
+│ Grafana      │      │                  │      │               │
 │ Caddy        │      │                  │      │               │
 │ Cloudflared  │      │                  │      │               │
 └──────────────┘      └──────────────────┘      └───────────────┘
@@ -89,8 +90,7 @@ goes down, its apps are down until the node comes back — that's fine for a hom
 │ (Coral+GPU)   │
 └───────────────┘
 
-    All nodes also run: Dozzle (container log viewer)
-    and Beszel agent (metrics collection)
+    All nodes also run: Telegraf (metrics collection → VictoriaMetrics on epyc)
 ```
 
 ### Node assignments
@@ -103,11 +103,12 @@ Apps are pinned to nodes based on resource needs and data locality.
 - Immich — photo library + ML inference (memory/CPU intensive)
 - Authentik — SSO (server + worker)
 - Valkey — Redis-compatible cache (used by Authentik, Immich)
-- Windmill — workflow execution (can be CPU-heavy)
 - Vaultwarden — password vault (Postgres-backed)
 - Linkwarden, FreshRSS, Atuin — Postgres-backed, lightweight
 - TheLounge, Unifi Controller — small config volumes
 - DukeTogo, Paste, SMTP Relay — minimal/stateless
+- VictoriaMetrics — time-series storage (Nomad job)
+- Grafana — dashboards (Nomad job)
 - Caddy reverse proxy + Cloudflared tunnel
 
 **h4uno** — Media serving + libraries (2TB NVMe, NFS server for media, Intel N97 Quick Sync for Plex transcoding)
@@ -121,7 +122,6 @@ Apps are pinned to nodes based on resource needs and data locality.
 - Calibre-Web — config + `/srv/data/books/`
 - OCIS — ownCloud files
 - Music Assistant — config + reads `/srv/data/music/`
-- Beszel hub — monitoring dashboards (agents on all nodes)
 
 **h4dos** — Download automation (mounts h4uno:/srv/data via NFS)
 - `/mnt/data/` — NFS mount of h4uno:/srv/data (downloads + media as one filesystem, hard-links work)
@@ -231,8 +231,7 @@ all_apps:
   - { zone: groovie.org, name: vaultwarden }
   - { zone: groovie.org, name: unifi }
   - { zone: groovie.org, name: frigate }
-  - { zone: groovie.org, name: beszel }
-  - { zone: groovie.org, name: windmill }
+  - { zone: groovie.org, name: grafana }
   - { zone: ofcode.org, name: paste }
 
 public_apps:
@@ -308,8 +307,7 @@ Based on current k8s ingress classes (internal = default, external = Authentik o
 - `vaultwarden.groovie.org` — Vaultwarden
 - `unifi.groovie.org` — Unifi
 - `frigate.groovie.org` — Frigate
-- `beszel.groovie.org` — Beszel monitoring
-- `windmill.groovie.org` — Windmill
+- `grafana.groovie.org` — Grafana dashboards
 
 To make an internal app public later: add it to `public_apps` in group_vars and
 run the cloudflare-dns playbook. That's it — Caddy and cloudflared already handle it.
@@ -399,11 +397,8 @@ unifi.groovie.org {
 frigate.groovie.org {
   reverse_proxy beelink1:5000
 }
-beszel.groovie.org {
-  reverse_proxy h4uno:8090
-}
-windmill.groovie.org {
-  reverse_proxy localhost:8000
+grafana.groovie.org {
+  reverse_proxy localhost:3001
 }
 
 # --- ofcode.org ---
@@ -466,7 +461,7 @@ data on NVMe, backup on SATA, offsite copy on S3.
 | What | How | Local (SATA) | Offsite (S3) |
 |------|-----|-------------|--------------|
 | PostgreSQL 17 (shared) | pgBackRest (WAL archiving + daily base) | `/mnt/backups/pgbackrest/` | S3 (`s3://homestar-cloudnative-pg/pgbackrest/homestar-pg17`) ✅ |
-| Immich Postgres (Docker) | pg_dump on schedule (Nomad periodic job) | `/mnt/backups/immich-pg/` | — (local only for now) ✅ |
+| Immich Postgres (Docker) | pg_dump on schedule (Nomad periodic job) + S3 sync | `/mnt/backups/immich-pg/` | S3 (`s3://homestar-cloudnative-pg/immich-pg-dumps/`) ✅ |
 | App config volumes | Restic | `/mnt/backups/restic/` | S3 |
 | Media (music/video/books) | Restic or rclone | — (too large for SATA) | S3 / second drive |
 
@@ -568,7 +563,7 @@ Roles that exist in this repo and their status:
 - [x] `caddy` — applied ✅
 - [x] `cloudflare-dns` — applied ✅
 - [x] `opnsense-dns` — applied ✅
-- [ ] `monitoring` — not yet written (Beszel agent + Dozzle)
+- [ ] `telegraf` — not yet written (Telegraf agent for metrics collection)
 - [x] `backup` (pgBackRest) — added to `postgres` role; WAL streaming to local + S3, daily full + hourly diff
   - Immich Postgres backed up via `immich-pg-backup` Nomad periodic job (daily pg_dump)
   - [ ] Restic for app config volumes — not yet written
@@ -1092,7 +1087,7 @@ rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
   - DB creds from 1Password `vaultwarden` item; admin token must be Argon2id hashed
   - DB needs schema grant: `GRANT ALL ON SCHEMA public TO vaultwarden;`
   - SMTP via smtp-relay.groovie.org:25
-- [ ] Windmill — connects to Postgres local
+- [ ] ~~Windmill — skipped, not in use~~
 - [x] Linkwarden — Postgres local + config volume (port 3000, v2.14.0)
   - Authentik SSO + OpenAI auto-tagging enabled
   - Run `npx playwright install chromium` in container for link preservation
@@ -1101,21 +1096,29 @@ rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
   - OIDC secrets from 1Password `freshrss` item, DB creds from `freshrss` item
   - Restored config had old k8s DB host — updated to `127.0.0.1` in `/srv/freshrss/config/config.php`
   - DB user password and table grants needed: `ALTER USER freshrss WITH PASSWORD '...'; GRANT ALL ON ALL TABLES/SEQUENCES IN SCHEMA public TO freshrss;`
-- [ ] Atuin — Postgres local
-- [ ] TheLounge — config volume
+- [x] Atuin — Postgres local (port 8888)
+  - DB needs table ownership reassigned to atuin user
+- [x] TheLounge — config volume (port 9090)
+  - Restored config had port 9000 hardcoded — updated to 9090 in config.js
 - [x] Unifi Controller — config volume (jacobalberty/unifi:v10.0.162)
   - Restored from backup via setup wizard at `https://<ip>:8443` directly (not through Caddy — restore upload fails via reverse proxy)
   - Caddy reverse proxy requires `header_up Host {hostport}` for HTTPS backends (Caddy 2.11+ changed default behavior)
   - UFW ports needed: 8443/tcp, 8080/tcp, 3478/udp, 10001/udp, 5514/udp, 6789/tcp, 8843/tcp, 8880/tcp
   - Added `base_extra_firewall_ports` to base role for per-host UFW rules
-- [ ] DukeTogo — config volume
-- [ ] Paste — config volume
+- [x] DukeTogo — config volume, GCR private image (needs gcloud CLI on epyc for auth)
+  - Secrets from 1Password `duketogo` item (discord token, sentry DSN, stonks API key)
+  - Required adding gcloud CLI installation to docker Ansible role (`docker_install_gcloud: true`)
+  - Image rebuilt via Cloud Build after old GCR tag was removed
+- [x] Paste — stateless, uses existing Valkey on localhost:6379 (port 6543)
 - [x] SMTP Relay — stateless (Maddy on port 25)
   - Secrets from 1Password `smtp-relay` item (hostname, server, username, password)
   - Used by Authentik and Vaultwarden via smtp-relay.groovie.org
   - Added opnSense DNS override for smtp-relay.groovie.org
-- [ ] Beszel agent
-- [ ] Dozzle
+- [ ] ~~Beszel agent — replaced by Telegraf + VictoriaMetrics + Grafana~~
+- [ ] ~~Dozzle — dropped; Nomad UI provides sufficient log access~~
+- [ ] Telegraf — host-installed via Ansible role (collects system, Docker, Nomad, Postgres metrics)
+- [ ] VictoriaMetrics — Nomad job on epyc (time-series storage, receives from Telegraf)
+- [ ] Grafana — Nomad job on epyc (dashboards, queries VictoriaMetrics)
 
 ### Example Nomad job (Immich)
 
@@ -1188,7 +1191,7 @@ job "immich" {
 
 Re-image h4uno last — it's currently running most k8s workloads. Scale them down
 before wiping. After re-imaging: run `base`, `docker`, `nomad`, `onepassword`,
-`nfs` (server), `monitoring`, and `backup` roles, then restore data and deploy jobs.
+`nfs` (server), `telegraf`, and `backup` roles, then restore data and deploy jobs.
 
 ### NFS server setup
 
@@ -1222,7 +1225,7 @@ Directory structure on h4uno:
 - [ ] `nomad` (client only — connects to epyc:4647)
 - [ ] `onepassword`
 - [ ] `nfs` (server — exports `/srv/data`)
-- [ ] `monitoring` (Beszel agent + Beszel hub + Dozzle)
+- [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
 - [ ] `backup` (Restic for app configs)
 
 ### Data restoration
@@ -1252,8 +1255,6 @@ rsync -a /mnt/backup/music-assistant/music-assistant-config/ /srv/music-assistan
 - [ ] Calibre-Web — config (local) + `/srv/data/books/`
 - [ ] OCIS — data (local)
 - [ ] Music Assistant — config (local) + `/srv/data/music/`
-- [ ] Beszel hub — fresh install, no data to restore
-- [ ] Dozzle
 
 ---
 
@@ -1262,7 +1263,7 @@ rsync -a /mnt/backup/music-assistant/music-assistant-config/ /srv/music-assistan
 **Status:** 🔴 Not started
 
 After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, `nfs` (client),
-`monitoring`, and `backup` roles, then restore configs and deploy jobs.
+`telegraf`, and `backup` roles, then restore configs and deploy jobs.
 
 ### NFS client setup
 
@@ -1285,7 +1286,7 @@ Plex is also on h4uno, so there's nothing to serve media to anyway.
 - [ ] `nomad` (client only — connects to epyc:4647)
 - [ ] `onepassword`
 - [ ] `nfs` (client — mounts h4uno:/srv/data at /mnt/data)
-- [ ] `monitoring` (Beszel agent + Dozzle)
+- [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
 - [ ] `backup` (Restic for app configs)
 
 ### Data restoration
@@ -1313,7 +1314,7 @@ rsync -a /mnt/backup/sabnzbd/sabnzbd-config/ /srv/sabnzbd/config/
 
 **Status:** 🔴 Not started
 
-After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, and `monitoring`
+After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, and `telegraf`
 roles, then restore config and deploy the Frigate job.
 
 ### Ansible roles for beelink1
@@ -1322,7 +1323,7 @@ roles, then restore config and deploy the Frigate job.
 - [ ] `docker`
 - [ ] `nomad` (client only — connects to epyc:4647)
 - [ ] `onepassword`
-- [ ] `monitoring` (Beszel agent + Dozzle)
+- [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
 
 ### Apps to deploy
 
@@ -1352,7 +1353,7 @@ roles, then restore config and deploy the Frigate job.
 | PVC | Nomad `host_volume` |
 | Namespace | Nomad namespace (optional) |
 | ConfigMap / Secret | Nomad `template` stanza |
-| kube-prometheus-stack | Beszel (metrics/dashboards) + Dozzle (container logs) |
+| kube-prometheus-stack | Telegraf (collection) + VictoriaMetrics (storage) + Grafana (dashboards) |
 | VolSync restic backups | Nomad periodic jobs or systemd timers running restic |
 | Renovate | Renovate watching Nomad job files for Docker image updates (same repo, new file format) |
 | Talos (immutable OS) | Ubuntu Server 24.04 LTS managed by Ansible |
