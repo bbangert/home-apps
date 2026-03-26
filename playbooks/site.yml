@@ -5,3 +5,44 @@
   become: true
   roles:
     - role: base
+      tags: [base]
+
+- name: Install and configure Docker
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - role: docker
+      tags: [docker]
+
+- name: Install and configure 1Password CLI
+  hosts: epyc
+  gather_facts: true
+  become: true
+  roles:
+    - role: onepassword
+      tags: [onepassword]
+
+- name: Install and configure Nomad
+  hosts: nomad_server:nomad_client
+  gather_facts: true
+  become: true
+  roles:
+    - role: nomad
+      tags: [nomad]
+
+- name: Install and configure PostgreSQL
+  hosts: postgres
+  gather_facts: true
+  become: true
+  roles:
+    - role: postgres
+      tags: [postgres]
+
+- name: Install and configure Caddy
+  hosts: epyc
+  gather_facts: true
+  become: true
+  roles:
+    - role: caddy
+      tags: [caddy]

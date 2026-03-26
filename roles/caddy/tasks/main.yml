@@ -1,0 +1,109 @@
+---
+- name: Create caddy group
+  ansible.builtin.group:
+    name: caddy
+    system: true
+    state: present
+
+- name: Create caddy user
+  ansible.builtin.user:
+    name: caddy
+    group: caddy
+    system: true
+    home: "{{ caddy_data_dir }}"
+    create_home: true
+    shell: /usr/sbin/nologin
+    state: present
+
+- name: Create caddy config directory
+  ansible.builtin.file:
+    path: "{{ caddy_config_dir }}"
+    state: directory
+    owner: root
+    group: caddy
+    mode: "0750"
+
+- name: Download Caddy binary with cloudflare DNS plugin
+  ansible.builtin.get_url:
+    url: "{{ caddy_download_url }}"
+    dest: /tmp/caddy_download
+    mode: "0755"
+    timeout: 120
+  register: caddy_download
+
+- name: Check if caddy binary already exists
+  ansible.builtin.stat:
+    path: "{{ caddy_binary_path }}"
+    checksum_algorithm: sha256
+  register: caddy_existing
+
+- name: Get checksum of downloaded binary
+  ansible.builtin.stat:
+    path: /tmp/caddy_download
+    checksum_algorithm: sha256
+  register: caddy_new
+
+- name: Install Caddy binary
+  ansible.builtin.copy:
+    src: /tmp/caddy_download
+    dest: "{{ caddy_binary_path }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  when: >
+    not caddy_existing.stat.exists or
+    caddy_existing.stat.checksum != caddy_new.stat.checksum
+  notify: restart caddy
+
+- name: Set capability for Caddy to bind to low ports
+  community.general.capabilities:
+    path: "{{ caddy_binary_path }}"
+    capability: cap_net_bind_service+ep
+    state: present
+
+- name: Write Cloudflare API token env file
+  ansible.builtin.copy:
+    content: "CLOUDFLARE_API_TOKEN={{ caddy_cloudflare_api_token }}\n"
+    dest: "{{ caddy_config_dir }}/env"
+    owner: root
+    group: caddy
+    mode: "0640"
+  notify: restart caddy
+
+- name: Write Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ caddy_config_dir }}/Caddyfile"
+    owner: root
+    group: caddy
+    mode: "0640"
+  notify: reload caddy
+
+- name: Install Caddy systemd service
+  ansible.builtin.template:
+    src: caddy.service.j2
+    dest: /etc/systemd/system/caddy.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart caddy
+
+- name: Enable and start Caddy
+  ansible.builtin.systemd:
+    name: caddy
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Allow HTTPS through UFW
+  community.general.ufw:
+    rule: allow
+    port: "443"
+    proto: tcp
+
+- name: Allow HTTP through UFW
+  community.general.ufw:
+    rule: allow
+    port: "80"
+    proto: tcp

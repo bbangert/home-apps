@@ -1,0 +1,116 @@
+---
+- name: Assert a Debian-family target for 1Password CLI
+  ansible.builtin.assert:
+    that:
+      - ansible_facts["os_family"] == "Debian"
+    fail_msg: The onepassword role currently supports Debian-family hosts only.
+
+- name: Install prerequisites for the 1Password repository
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gnupg
+      - debsig-verify
+    state: present
+    update_cache: true
+
+- name: Ensure 1Password repository directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ onepassword_keyring_dir }}"
+    - "{{ onepassword_policy_dir }}"
+    - "{{ onepassword_debsig_keyring_dir }}"
+    - /usr/local/share
+
+- name: Download the 1Password signing key
+  ansible.builtin.get_url:
+    url: "{{ onepassword_key_url }}"
+    dest: "{{ onepassword_key_source_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: onepassword_key_download
+
+- name: Check for the apt keyring
+  ansible.builtin.stat:
+    path: "{{ onepassword_keyring_path }}"
+  register: onepassword_apt_keyring
+
+- name: Check for the debsig keyring
+  ansible.builtin.stat:
+    path: "{{ onepassword_debsig_keyring_path }}"
+  register: onepassword_debsig_keyring
+
+- name: Render the apt keyring for 1Password
+  ansible.builtin.command:
+    cmd: >-
+      gpg --dearmor --yes
+      --output {{ onepassword_keyring_path }}
+      {{ onepassword_key_source_path }}
+  when:
+    - onepassword_key_download.changed or not onepassword_apt_keyring.stat.exists
+
+- name: Render the debsig keyring for 1Password
+  ansible.builtin.command:
+    cmd: >-
+      gpg --dearmor --yes
+      --output {{ onepassword_debsig_keyring_path }}
+      {{ onepassword_key_source_path }}
+  when:
+    - onepassword_key_download.changed or not onepassword_debsig_keyring.stat.exists
+
+- name: Install the 1Password debsig policy
+  ansible.builtin.get_url:
+    url: "{{ onepassword_policy_url }}"
+    dest: "{{ onepassword_policy_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add the 1Password apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ onepassword_repo_arch }} signed-by={{ onepassword_keyring_path }}]
+      {{ onepassword_repo_url }}
+      {{ onepassword_repo_channel }} {{ onepassword_repo_component }}
+    state: present
+    filename: 1password
+
+- name: Install 1Password CLI
+  ansible.builtin.apt:
+    name: "{{ onepassword_package_name }}"
+    state: present
+    update_cache: true
+
+- name: Ensure /etc/1password directory exists
+  ansible.builtin.file:
+    path: /etc/1password
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write service account token to /etc/1password/env
+  ansible.builtin.copy:
+    content: "OP_SERVICE_ACCOUNT_TOKEN={{ onepassword_service_account_token }}\n"
+    dest: /etc/1password/env
+    owner: root
+    group: root
+    mode: "0600"
+  when: onepassword_service_account_token != ""
+
+- name: Write /etc/profile.d/1password.sh to export token on login
+  ansible.builtin.copy:
+    content: |
+      # 1Password CLI service account token
+      export OP_SERVICE_ACCOUNT_TOKEN={{ onepassword_service_account_token }}
+    dest: /etc/profile.d/1password.sh
+    owner: root
+    group: root
+    mode: "0644"
+  when: onepassword_service_account_token != ""

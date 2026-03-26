@@ -1,0 +1,17 @@
+---
+onepassword_package_name: 1password-cli
+onepassword_repo_arch: amd64
+onepassword_repo_component: main
+onepassword_repo_channel: stable
+onepassword_key_url: https://downloads.1password.com/linux/keys/1password.asc
+onepassword_repo_url: "https://downloads.1password.com/linux/debian/{{ onepassword_repo_arch }}"
+onepassword_keyring_dir: /etc/apt/keyrings
+onepassword_keyring_path: /etc/apt/keyrings/1password-archive-keyring.gpg
+onepassword_policy_dir: /etc/debsig/policies/AC2D62742012EA22
+onepassword_policy_path: /etc/debsig/policies/AC2D62742012EA22/1password.pol
+onepassword_policy_url: https://downloads.1password.com/linux/debian/debsig/1password.pol
+onepassword_debsig_keyring_dir: /usr/share/debsig/keyrings/AC2D62742012EA22
+onepassword_debsig_keyring_path: /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+onepassword_key_source_path: /usr/local/share/1password.asc
+# Pass at runtime via --extra-vars, never commit to git
+onepassword_service_account_token: ""

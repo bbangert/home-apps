@@ -1,0 +1,18 @@
+---
+postgres_version: 17
+postgres_config_dir: "/etc/postgresql/17/main"
+
+# Tuning — conservative for a shared node
+postgres_shared_buffers: 2GB
+postgres_effective_cache_size: 8GB
+postgres_work_mem: 64MB
+postgres_maintenance_work_mem: 512MB
+postgres_max_connections: 200
+postgres_listen_addresses: "*"
+
+# Subnet allowed to connect from other cluster nodes
+postgres_hba_lan_subnet: 192.168.2.0/24
+
+# Superuser password — pulled from 1Password at playbook run time
+postgres_superuser_password: >-
+  {{ lookup('pipe', 'op read ' + onepassword_item_paths.postgres_superuser_password) }}

@@ -8,3 +8,13 @@ homestar_ipv4_addresses:
   - 192.168.2.202/24
 homestar_service_ip: 192.168.2.35
 homestar_unifi_ip: 192.168.2.202
+
+nomad_host_volumes:
+  - name: immich-pg-data
+    path: /srv/immich-pg/data
+
+caddy_routes: []
+# Routes are added here as apps are deployed, e.g.:
+# caddy_routes:
+#   - hostname: photos.groovie.org
+#     backend: localhost:2283

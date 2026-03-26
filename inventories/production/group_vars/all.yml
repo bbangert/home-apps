@@ -69,3 +69,6 @@ onepassword_item_paths:
   postgres_superuser_password: op://HomeCluster/cloudnative-pg/POSTGRES_SUPER_PASS
   opnsense_api_key: op://HomeCluster/opnsense/API_KEY
   opnsense_api_secret: op://HomeCluster/opnsense/API_SECRET
+  aws_access_key_id: op://HomeCluster/aws/ACCESS_KEY_ID
+  aws_secret_access_key: op://HomeCluster/aws/SECRET_ACCESS_KEY
+  immich_postgres_password: op://HomeCluster/immich/POSTGRES_PASS

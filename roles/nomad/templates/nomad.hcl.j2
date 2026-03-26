@@ -1,0 +1,23 @@
+datacenter = "{{ nomad_datacenter }}"
+data_dir   = "{{ nomad_data_dir }}"
+
+{% if inventory_hostname in groups['nomad_server'] %}
+server {
+  enabled          = true
+  bootstrap_expect = 1
+}
+
+{% endif %}
+client {
+  enabled = true
+{% if inventory_hostname not in groups['nomad_server'] %}
+  servers = ["{{ hostvars[groups['nomad_server'][0]]['ansible_host'] }}:4647"]
+{% endif %}
+{% for vol in nomad_host_volumes %}
+
+  host_volume "{{ vol.name }}" {
+    path      = "{{ vol.path }}"
+    read_only = false
+  }
+{% endfor %}
+}

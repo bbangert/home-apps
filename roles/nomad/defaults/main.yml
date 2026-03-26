@@ -1,0 +1,10 @@
+---
+# Pin a version ("1.9.5") or leave empty to install latest available.
+nomad_version: ""
+
+nomad_data_dir: /opt/nomad
+nomad_config_dir: /etc/nomad.d
+
+# List of host volumes to declare in the client stanza.
+# Each entry: { name: "plex-config", path: "/srv/plex/config" }
+nomad_host_volumes: []

@@ -1,0 +1,70 @@
+---
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Add HashiCorp GPG key
+  ansible.builtin.get_url:
+    url: https://apt.releases.hashicorp.com/gpg
+    dest: /etc/apt/keyrings/hashicorp.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add HashiCorp apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/hashicorp.asc]
+      https://apt.releases.hashicorp.com
+      {{ ansible_facts["distribution_release"] }} main
+    state: present
+    filename: hashicorp
+
+- name: Install Nomad
+  ansible.builtin.apt:
+    name: "{{ 'nomad=' + nomad_version + '-1' if nomad_version else 'nomad' }}"
+    state: present
+    update_cache: true
+
+- name: Render Nomad configuration
+  ansible.builtin.template:
+    src: nomad.hcl.j2
+    dest: "{{ nomad_config_dir }}/nomad.hcl"
+    owner: root
+    group: nomad
+    mode: "0640"
+  notify: restart nomad
+
+- name: Allow Nomad HTTP API through ufw
+  community.general.ufw:
+    rule: allow
+    port: "4646"
+    proto: tcp
+
+- name: Allow Nomad RPC through ufw
+  community.general.ufw:
+    rule: allow
+    port: "4647"
+    proto: tcp
+
+- name: Allow Nomad Serf TCP through ufw
+  community.general.ufw:
+    rule: allow
+    port: "4648"
+    proto: tcp
+
+- name: Allow Nomad Serf UDP through ufw
+  community.general.ufw:
+    rule: allow
+    port: "4648"
+    proto: udp
+
+- name: Ensure Nomad is started and enabled
+  ansible.builtin.service:
+    name: nomad
+    state: started
+    enabled: true

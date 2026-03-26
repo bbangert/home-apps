@@ -23,7 +23,7 @@ goes down, its apps are down until the node comes back — that's fine for a hom
 
 | Name | Hardware | CPU | Disk | RAM | Notes |
 |------|----------|-----|------|-----|-------|
-| epyc | Supermicro 5019D-FTN4 | AMD EPYC 3251 8C/16T @ 2.5-3.1GHz | 4TB NVMe (new) + 2TB SATA SSD | 128GB | No iGPU. Currently runs talos1+talos2 VMs under Proxmox. Will be wiped to bare metal. |
+| epyc | Supermicro 5019D-FTN4 | AMD EPYC 3251 8C/16T @ 2.5-3.1GHz | 4TB NVMe (new) + 2TB SATA SSD | 128GB | No iGPU. Currently runs talos1+talos2 VMs under Proxmox. Will be wiped to bare metal. NVMe: all app data + Postgres. SATA: local backups (`/mnt/backups`). |
 | h4uno | ODroid H4 | Intel N97 4C/4T @ 2.0-3.6GHz | 2TB NVMe | 32GB | Quick Sync (HW transcode for Plex) |
 | h4dos | ODroid H4 | Intel N97 4C/4T @ 2.0-3.6GHz | 2TB NVMe | 32GB | Quick Sync |
 | beelink1 | Beelink Mini S | Intel N5095 4C/4T @ 2.0-2.9GHz | 2TB SATA SSD | 8GB | Coral TPU + Intel GPU for Frigate |
@@ -38,7 +38,7 @@ goes down, its apps are down until the node comes back — that's fine for a hom
 - immich
 - **⚠️ Currently down** — same reason. Data intact in Barman S3 backups.
 
-**Dragonfly** (Redis-compatible, ephemeral, used by Authentik)
+**Valkey** (Redis-compatible, ephemeral, used by Authentik + Immich)
 
 ---
 
@@ -63,7 +63,7 @@ goes down, its apps are down until the node comes back — that's fine for a hom
 │ Postgres 17  │      │ Plex             │      │ Sonarr        │
 │ Immich+PG+ML │      │ Komga + Komf     │      │ Radarr        │
 │ Authentik    │      │ Calibre-Web      │      │ Lidarr        │
-│ Dragonfly    │      │ OCIS             │      │ SABnzbd       │
+│ Valkey       │      │ OCIS             │      │ SABnzbd       │
 │ Windmill     │      │ Music Assistant  │      │ Prowlarr      │
 │ Linkwarden   │      │ Beszel hub       │      │               │
 │ FreshRSS     │      │                  │      │               │
@@ -102,7 +102,7 @@ Apps are pinned to nodes based on resource needs and data locality.
 - Immich Postgres (Docker, via Nomad) — Immich's official image with VectorChord, port 5433
 - Immich — photo library + ML inference (memory/CPU intensive)
 - Authentik — SSO (server + worker)
-- Dragonfly — Redis-compatible cache
+- Valkey — Redis-compatible cache (used by Authentik, Immich)
 - Windmill — workflow execution (can be CPU-heavy)
 - Vaultwarden — password vault (Postgres-backed)
 - Linkwarden, FreshRSS, Atuin — Postgres-backed, lightweight
@@ -422,22 +422,33 @@ freshrss, vaultwarden, thelounge all on epyc can't all use 8080).
 Secrets stay in 1Password — same source of truth as before, just accessed directly
 via the `op` CLI instead of through External Secrets + 1Password Connect.
 
-For Nomad jobs, use `op run` to inject secrets as environment variables at deploy time:
+For Nomad jobs, use **Nomad Variables** as the secrets store. Load secrets from
+1Password once, then jobs reference them via template — no secrets needed at deploy time:
+
 ```bash
-# Deploy a job with secrets injected from 1Password
-op run --env-file=.env.tpl -- nomad job run plex.nomad.hcl
+# Load a secret into Nomad Variables (repeat when the password changes)
+nomad var put nomad/jobs/<job-name> \
+  SOME_PASSWORD=$(op read op://HomeCluster/<item>/<field>)
+
+# Deploy normally — no op involvement at run time
+nomad job run jobs/epyc/<job-name>.nomad.hcl
 ```
 
-Or use `op read` in Nomad job `template` stanzas for secrets that need to be in files:
+Reference from the job's template stanza:
 ```hcl
 template {
   data        = <<EOF
-DB_PASSWORD={{ env "DB_PASSWORD" }}
+{{ with nomadVar "nomad/jobs/<job-name>" -}}
+SOME_PASSWORD={{ .SOME_PASSWORD }}
+{{- end }}
 EOF
-  destination = "secrets/db.env"
+  destination = "secrets/app.env"
   env         = true
 }
 ```
+
+Note: `{{ env "VAR" }}` in Nomad templates reads from the Nomad *agent's* environment,
+not the submitting shell — it does not work for injecting secrets at deploy time.
 
 For Ansible, `op read` in tasks or a lookup plugin:
 ```yaml
@@ -448,12 +459,19 @@ For Ansible, `op read` in tasks or a lookup plugin:
 
 ### Backups (new setup)
 
-| What | How | Where |
-|------|-----|-------|
-| PostgreSQL 17 (shared) | pg_dump cron (or pgBackRest) | S3 (Cloudflare R2 or Backblaze B2) |
-| Immich Postgres (Docker) | pg_dump from container, separate schedule | S3 |
-| App config volumes | Restic cron job per node | S3 |
-| Media (music/video/books) | Restic or rclone | S3 / second drive |
+epyc's 2TB SATA SSD (`/mnt/backups`) serves as the local backup target — physically
+separate from the 4TB NVMe holding app data and Postgres. This gives a 3-2-1 pattern:
+data on NVMe, backup on SATA, offsite copy on S3.
+
+| What | How | Local (SATA) | Offsite (S3) |
+|------|-----|-------------|--------------|
+| PostgreSQL 17 (shared) | pgBackRest (WAL archiving + daily base) | `/mnt/backups/pgbackrest/` | S3 (Cloudflare R2 or Backblaze B2) |
+| Immich Postgres (Docker) | pg_dump on schedule | `/mnt/backups/immich-pg/` | S3 |
+| App config volumes | Restic | `/mnt/backups/restic/` | S3 |
+| Media (music/video/books) | Restic or rclone | — (too large for SATA) | S3 / second drive |
+
+The SATA drive also provides staging space for the PG16→PG17 Barman restore process
+(dump files land at `/mnt/backups/pg-migration/` instead of consuming NVMe space).
 
 Nomad periodic jobs or simple systemd timers can run the backup schedules.
 
@@ -510,55 +528,76 @@ k8s volumes). Backup data is on local disk ready for restoration to host paths.
 
 ---
 
-## Phase 1: Foundation
+## Phase 1: epyc — Complete Setup
 
-**Status:** 🔴 Not started
+**Status:** 🟡 In progress
 
-One node at a time. Start with a worker, validate, then do the rest.
+Complete all epyc setup before re-imaging any other node. Phases 2–4 handle h4uno,
+h4dos, and beelink1 respectively. Scale down k8s workloads on those nodes as needed
+to free up resources, but don't wipe them until epyc is fully operational and
+validated. Caddy and DNS can be configured for all apps up front — routes to other
+nodes will return 502 until those nodes come up, which is fine.
 
 ### Order of operations
 
-1. Wipe **epyc** first (already degraded — talos1 down, volume full) → Ubuntu Server 24.04 LTS bare metal + Ansible + Nomad server+client + PostgreSQL 17
-2. Re-image **beelink1** → Ubuntu Server 24.04 LTS + Ansible + Nomad client → validate connects to Nomad server on epyc
-3. Re-image **h4dos** → Ubuntu Server 24.04 LTS + Ansible + Nomad client → validate
-4. Re-image **h4uno** last (currently running most k8s workloads) → Ubuntu Server 24.04 LTS + Ansible + Nomad client → validate
-5. Restore data from backups to host paths on each node
+1. ✅ Wipe epyc → Ubuntu Server 24.04 LTS bare metal
+2. ✅ Run `base` role — networking, SSH, firewall, packages
+3. Mount 2TB SATA SSD at `/mnt/backups`
+4. Run `docker` role
+5. Run `nomad` role → validate Nomad server+client is up
+6. Install 1Password CLI + configure service account
+7. Restore databases from Barman S3 backups (staging on `/mnt/backups/pg-migration/`)
+8. Deploy PostgreSQL 17, restore all databases
+9. Deploy Immich Postgres (Nomad job, port 5433), restore Immich database
+10. Deploy Valkey
+11. Deploy Caddy (all routes) + Cloudflared tunnel
+12. Configure DNS: Cloudflare CNAMEs + opnSense Unbound overrides for all apps
+13. Restore PVC data to `/srv/` paths on epyc
+14. Deploy all epyc apps
+15. Configure backups: pgBackRest + Restic
 
-### Ansible roles needed
+### Ansible roles
 
-- [ ] `base` — OS hardening, SSH keys, NTP, packages, firewall
-- [ ] `onepassword` — 1Password CLI install + service account config (all nodes)
-- [ ] `docker` — Docker CE install + daemon config
-- [ ] `nomad` — Nomad binary + systemd unit (server or client role via variable)
-- [ ] `nfs` — NFS server on h4uno (exports `/srv/data`), NFS client on h4dos (mounts to `/mnt/data`)
-- [ ] `caddy` — Custom Caddy build with cloudflare DNS plugin (epyc only), Caddyfile
-- [ ] `cloudflare-dns` — Manages CNAME records for public apps via Cloudflare API
-- [ ] `opnsense-dns` — Manages Unbound host overrides for all apps via opnSense API
-- [ ] `postgres` — PostgreSQL 17 install from PGDG repo (epyc only), tuned for shared node
-- [ ] `monitoring` — Beszel agent on all nodes, Beszel hub on h4uno, Dozzle on all nodes
-- [ ] `backup` — restic + cron schedules for volume and DB backups
+Roles that exist in this repo and their status:
 
-### Ansible inventory
+- [x] `base` — applied ✅
+- [x] `docker` — applied ✅
+- [x] `nomad` — applied ✅
+- [x] `onepassword` — applied ✅
+- [x] `postgres` — applied ✅
+- [x] `caddy` — applied ✅
+- [ ] `cloudflare-dns` — not yet written
+- [ ] `opnsense-dns` — not yet written
+- [ ] `monitoring` — not yet written (Beszel agent + Dozzle)
+- [ ] `backup` — not yet written (pgBackRest + Restic)
+- [ ] `nfs` — not yet written (needed for Phase 2/3)
 
-```ini
-[nomad_server]
-epyc     ansible_host=192.168.2.35
+### SATA backup drive
 
-[nomad_client]
-h4uno    ansible_host=192.168.2.36
-h4dos    ansible_host=192.168.2.39
-beelink1 ansible_host=192.168.2.40
+Mount the 2TB SATA SSD at `/mnt/backups` before anything else — Barman restore
+staging and all local backups land here.
 
-[postgres]
-epyc
+```bash
+# Find the SATA device
+lsblk
 
-[all:vars]
-ansible_user=ben
+# Format if new
+sudo mkfs.ext4 /dev/sdX
+
+# Get UUID for fstab
+sudo blkid /dev/sdX
+
+# Mount
+sudo mkdir -p /mnt/backups
+echo "UUID=<uuid>  /mnt/backups  ext4  defaults  0  2" | sudo tee -a /etc/fstab
+sudo mount /mnt/backups
 ```
 
-### Nomad configuration
+### Nomad configuration (epyc)
 
-**epyc** (`/etc/nomad.d/nomad.hcl`):
+epyc runs both server and client. The `nomad` role generates this from the template
+using `nomad_host_volumes` defined in host_vars.
+
 ```hcl
 datacenter = "homestar"
 data_dir   = "/opt/nomad"
@@ -570,54 +609,12 @@ server {
 
 client {
   enabled = true
-  host_volume "postgres-data"     { path = "/srv/postgres/data" }
   host_volume "immich-pg-data"    { path = "/srv/immich-pg/data" }
   host_volume "immich-data"       { path = "/srv/immich/data" }
   host_volume "vaultwarden"       { path = "/srv/vaultwarden/config" }
   # ... one host_volume per app data dir on this node
 }
 ```
-
-**Clients** (`h4uno`, `h4dos`, `beelink1`):
-```hcl
-datacenter = "homestar"
-data_dir   = "/opt/nomad"
-
-client {
-  enabled = true
-  servers = ["192.168.2.35:4647"]
-
-  # h4uno example — local data root + app configs
-  host_volume "data"           { path = "/srv/data"           read_only = false }
-  host_volume "plex-config"    { path = "/srv/plex/config"    read_only = false }
-  host_volume "komga-config"   { path = "/srv/komga/config"   read_only = false }
-  # ...
-
-  # h4dos example — NFS mount of h4uno:/srv/data + local app configs
-  # host_volume "data"         { path = "/mnt/data"           read_only = false }
-  # host_volume "sonarr-config" { path = "/srv/sonarr/config" read_only = false }
-  # ...
-}
-```
-
-### Networking setup
-
-- [ ] epyc primary IP: 192.168.2.35 (reuse talos1's old IP)
-- [ ] epyc secondary IP: 192.168.2.202 (for Unifi controller, avoids re-adopting devices)
-- [ ] Configure both IPs in netplan on epyc (see Target State → IP plan)
-- [ ] h4uno, h4dos, beelink1 keep current IPs (.36, .39, .40)
-- [ ] opnSense: create API key for Ansible, reserve all IPs in DHCP
-- [ ] opnSense DNS: run `opnsense-dns` Ansible playbook to create host overrides
-- [ ] Cloudflare DNS: run `cloudflare-dns` Ansible playbook to create CNAMEs for public apps
-- [ ] Cloudflared tunnel on epyc with catch-all to Caddy
-- [ ] Update Plex `PLEX_ADVERTISE_URL` to `https://192.168.2.36:32400,https://plex.groovie.org:443`
-- [ ] Unifi devices already inform to 192.168.2.202 — no re-adoption needed
-
-### Target OS
-
-Ubuntu Server 24.04 LTS — newer kernel (6.8) for better N97 Quick Sync and Coral TPU support.
-PostgreSQL 17 via PGDG apt repo. Server variant (no GUI/desktop environment — headless,
-managed via SSH and Ansible).
 
 ### Renovate for image updates
 
@@ -632,16 +629,9 @@ config {
 }
 ```
 
-- [ ] Create new git repo for Nomad job files + Ansible + Caddyfile
-- [ ] Enable Renovate on the new repo (same GitHub App as before)
+- [ ] Enable Renovate on this repo (same GitHub App as before)
 - [ ] Verify Renovate detects image tags in `.hcl` files and creates PRs
 - [ ] Merge PRs, then `nomad job run` to apply (manual or via CI)
-
----
-
-## Phase 2: PostgreSQL + Infrastructure on epyc
-
-**Status:** 🔴 Not started
 
 ### Restore databases from Barman S3 backups
 
@@ -649,45 +639,123 @@ Barman backups are physical PG16 data files — they can only restore to PG16. S
 we want PG17, restore to a temporary PG16 instance first, then pg_dump → pg_restore
 into PG17.
 
-```bash
-# Step 1: Install PG16 temporarily + PG17 + barman-cli-cloud
-sudo apt install postgresql-16 postgresql-17 barman-cli-cloud
+Dump files and restored data directories land on the SATA backup drive
+(`/mnt/backups/pg-migration/`) to avoid consuming NVMe space.
 
-# Step 2: Restore shared cluster from S3
+```bash
+# Step 1: Create staging area on SATA backup drive
+sudo mkdir -p /mnt/backups/pg-migration
+sudo chown postgres:postgres /mnt/backups/pg-migration
+
+# Step 2: Export AWS credentials from 1Password (standard AWS S3, no custom endpoint)
+export AWS_ACCESS_KEY_ID=$(op read "op://HomeCluster/aws/ACCESS_KEY_ID")
+export AWS_SECRET_ACCESS_KEY=$(op read "op://HomeCluster/aws/SECRET_ACCESS_KEY")
+
+# Step 3: Install PG16 temporarily + barman-cli-cloud (PG17 already installed by Ansible)
+sudo apt install postgresql-16 barman-cli-cloud
+
+# Step 4: Set up AWS credentials for the postgres user (needed for WAL restore)
+sudo mkdir -p ~postgres/.aws
+sudo bash -c 'cat > ~postgres/.aws/credentials << EOF
+[default]
+aws_access_key_id = '"$(op read 'op://HomeCluster/aws/ACCESS_KEY_ID')"'
+aws_secret_access_key = '"$(op read 'op://HomeCluster/aws/SECRET_ACCESS_KEY')"'
+EOF'
+sudo chown -R postgres:postgres ~postgres/.aws
+sudo chmod 600 ~postgres/.aws/credentials
+
+# Step 5: Restore shared cluster base backup from S3
+sudo mkdir -p /mnt/backups/pg-migration
+sudo chown postgres:postgres /mnt/backups/pg-migration
 sudo -u postgres barman-cloud-restore \
   --cloud-provider aws-s3 \
   s3://homestar-cloudnative-pg/ \
   postgres16-v5 \
-  /var/lib/postgresql/16/restored
+  latest \
+  /mnt/backups/pg-migration/restored
 
-# Step 3: Start temporary PG16 on a non-default port
-pg_ctlcluster 16 restored start -o "-p 5434"
+# Step 6: Signal that this is a recovery (required — CNPG backups don't include this)
+sudo -u postgres touch /mnt/backups/pg-migration/restored/recovery.signal
 
-# Step 4: Dump all shared databases from restored PG16
+# Step 7: Create WAL restore wrapper script
+# The CNPG restore_command points at /controller/manager which doesn't exist here.
+# Override it with barman-cloud-wal-restore to replay all WAL from S3.
+sudo -u postgres bash -c 'cat > /tmp/wal-restore.sh << '"'"'EOF'"'"'
+#!/bin/bash
+exec barman-cloud-wal-restore --cloud-provider aws-s3 s3://homestar-cloudnative-pg/ postgres16-v5 "$1" "$2"
+EOF'
+sudo chmod +x /tmp/wal-restore.sh
+
+# Step 8: Start PG16, replaying all WAL from S3
+# Override several CNPG-specific settings that reference /controller/* paths:
+#   ssl=off               — CNPG cert files don't exist here
+#   logging_collector=off — CNPG log path doesn't exist here
+#   unix_socket_directories=/tmp — CNPG socket path doesn't exist here
+#   restore_command       — replace CNPG manager with barman-cloud-wal-restore
+# Wait for "database system is ready to accept connections" in the log.
+# Archive command errors about /controller/manager after promotion are harmless.
+sudo -u postgres /usr/lib/postgresql/16/bin/pg_ctl \
+  -D /mnt/backups/pg-migration/restored \
+  -l /tmp/pg16-restored.log \
+  -o "-p 5434 -c ssl=off -c logging_collector=off -c unix_socket_directories=/tmp \
+      -c restore_command='/tmp/wal-restore.sh %f %p'" \
+  start
+
+tail -f /tmp/pg16-restored.log
+# Wait until: LOG:  database system is ready to accept connections
+
+# Step 9: Dump all shared databases
+# Run as postgres so the shell redirect can write to the postgres-owned directory.
+# Use -h /tmp because we moved the socket directory there.
+sudo -u postgres bash -c '
+cd /mnt/backups/pg-migration
 for db in authentik atuin freshrss lidarr_main lidarr_log linkwarden \
           prowlarr_main radarr_main radarr_log sonarr_main sonarr_log \
           vaultwarden windmill; do
-  pg_dump -Fc -p 5434 -U postgres $db > ${db}.dump
-done
+  echo "Dumping $db..."
+  pg_dump -Fc -p 5434 -h /tmp -U postgres $db > ${db}.dump
+done'
 
-# Step 5: Repeat for Immich (separate Barman backup, different server name)
+# Step 10: Repeat for Immich (separate Barman backup, different server name)
+sudo -u postgres bash -c 'cat > /tmp/wal-restore-immich.sh << '"'"'EOF'"'"'
+#!/bin/bash
+exec barman-cloud-wal-restore --cloud-provider aws-s3 s3://homestar-cloudnative-pg/ immich-postgres16-v1 "$1" "$2"
+EOF'
+sudo chmod +x /tmp/wal-restore-immich.sh
+
 sudo -u postgres barman-cloud-restore \
   --cloud-provider aws-s3 \
   s3://homestar-cloudnative-pg/ \
   immich-postgres16-v1 \
-  /var/lib/postgresql/16/restored-immich
+  latest \
+  /mnt/backups/pg-migration/restored-immich
 
-pg_ctlcluster 16 restored-immich start -o "-p 5435"
-pg_dump -Fc -p 5435 -U postgres immich > immich.dump
+sudo -u postgres touch /mnt/backups/pg-migration/restored-immich/recovery.signal
 
-# Step 6: Verify dumps are valid
-for f in *.dump; do pg_restore --list $f > /dev/null && echo "$f OK"; done
+sudo -u postgres /usr/lib/postgresql/16/bin/pg_ctl \
+  -D /mnt/backups/pg-migration/restored-immich \
+  -l /tmp/pg16-restored-immich.log \
+  -o "-p 5435 -c ssl=off -c logging_collector=off -c unix_socket_directories=/tmp \
+      -c restore_command='/tmp/wal-restore-immich.sh %f %p' \
+      -c shared_preload_libraries=''" \
+  start
+# shared_preload_libraries='' is required — the Immich CNPG image had VectorChord
+# in shared_preload_libraries but the standard Ubuntu PG16 package doesn't have it.
+# pg_dump still works correctly without it; VectorChord is only needed at query time.
 
-# Step 7: Clean up temporary PG16
-pg_ctlcluster 16 restored stop
-pg_ctlcluster 16 restored-immich stop
+tail -f /tmp/pg16-restored-immich.log
+# Wait until: LOG:  database system is ready to accept connections
+
+sudo -u postgres bash -c 'pg_dump -Fc -p 5435 -h /tmp -U postgres immich > /mnt/backups/pg-migration/immich.dump'
+
+# Step 11: Verify all dumps are valid
+for f in /mnt/backups/pg-migration/*.dump; do pg_restore --list $f > /dev/null && echo "$f OK"; done
+
+# Step 12: Stop both temporary PG16 instances and clean up
+sudo -u postgres /usr/lib/postgresql/16/bin/pg_ctl -D /mnt/backups/pg-migration/restored stop
+sudo -u postgres /usr/lib/postgresql/16/bin/pg_ctl -D /mnt/backups/pg-migration/restored-immich stop
 sudo apt remove postgresql-16
-rm -rf /var/lib/postgresql/16/
+rm -rf /mnt/backups/pg-migration/restored /mnt/backups/pg-migration/restored-immich
 ```
 
 - [ ] Restore shared Barman backup (`postgres16-v5`)
@@ -719,28 +787,45 @@ max_connections = 200
 listen_addresses = '*'         # allow connections from other nodes
 ```
 
-Databases to restore (from dump files produced in the Barman restore step above):
+Databases to restore (from dump files produced in the Barman restore step above).
+App roles must be created first — `CREATE POLICY` statements in the schema reference
+them and will fail if the roles don't exist. Roles get proper passwords when each app
+is deployed; these are just placeholders to satisfy the restore.
+
 ```bash
+# Create placeholder app roles
+sudo -u postgres bash -c '
+for role in authentik atuin freshrss lidarr linkwarden prowlarr radarr \
+            sonarr vaultwarden windmill windmill_user windmill_admin; do
+  psql -c "CREATE ROLE $role LOGIN;" 2>/dev/null || echo "$role already exists"
+done'
+
+# Restore all databases
+sudo -u postgres bash -c '
+cd /mnt/backups/pg-migration
 for db in authentik atuin freshrss lidarr_main lidarr_log linkwarden \
           prowlarr_main radarr_main radarr_log sonarr_main sonarr_log \
           vaultwarden windmill; do
+  echo "Restoring $db..."
   createdb -U postgres $db
-  pg_restore -U postgres -d $db ${db}.dump
-done
+  pg_restore --no-owner --no-privileges -U postgres -d $db ${db}.dump
+done'
 ```
 
-- [ ] authentik
-- [ ] atuin
-- [ ] freshrss
-- [ ] lidarr_main, lidarr_log
-- [ ] linkwarden
-- [ ] prowlarr_main
-- [ ] radarr_main, radarr_log
-- [ ] sonarr_main, sonarr_log
-- [ ] vaultwarden
-- [ ] windmill
-- [ ] Create app-specific users with appropriate permissions
-- [ ] Verify each app can connect from epyc (localhost:5432) and from other nodes
+- [x] authentik
+- [x] atuin
+- [x] freshrss
+- [x] lidarr_main, lidarr_log
+- [x] linkwarden
+- [x] prowlarr_main
+- [x] radarr_main, radarr_log
+- [x] sonarr_main, sonarr_log
+- [x] vaultwarden
+- [x] windmill
+
+Note: placeholder roles were created for all apps to satisfy schema restore (see above).
+App-specific passwords and connection verification happen when deploying each app in
+the Apps section below.
 
 ### Immich PostgreSQL on epyc (separate, Dockerized via Nomad)
 
@@ -752,61 +837,159 @@ Immich gets its own Postgres container using Immich's official image. Rationale:
   shared Postgres with 12 other databases is untouched.
 - On a 128GB machine, a second Postgres instance is negligible overhead.
 
-```hcl
-# Nomad job for Immich's dedicated Postgres
-job "immich-postgres" {
-  constraint {
-    attribute = "${attr.unique.hostname}"
-    value     = "epyc"
-  }
-  group "db" {
-    network {
-      mode = "host"
-      port "pg" { static = 5433 }  # 5433 to avoid conflict with host PG on 5432
-    }
-    volume "data" {
-      type   = "host"
-      source = "immich-pg-data"
-    }
-    task "postgres" {
-      driver = "docker"
-      config {
-        # Use Immich's official image — includes pgvector + VectorChord
-        image        = "ghcr.io/immich-app/postgres:17-vectorchord0.5.3-pgvector0.8.1"
-        network_mode = "host"
-        ports        = ["pg"]
-      }
-      volume_mount {
-        volume      = "data"
-        destination = "/var/lib/postgresql"
-      }
-      env {
-        POSTGRES_DB       = "immich"
-        POSTGRES_USER     = "immich"
-        POSTGRES_PASSWORD = "${IMMICH_PG_PASS}"  # injected via op run
-      }
-    }
-  }
-}
+The job spec lives at `jobs/epyc/immich-postgres.nomad.hcl`. Key lessons from deployment:
+
+- **Secrets via Nomad Variables** — not `op run`. Store once, reference from template.
+  The `{{ env }}` template function reads from the Nomad agent's environment, not the
+  submitting shell, so it doesn't work for injecting secrets at deploy time.
+- **`PGPORT = "5433"`** — required. With host networking, `port { static = 5433 }` only
+  reserves and advertises the port; the container still defaults to 5432 internally.
+  Setting `PGPORT` is what actually makes postgres listen on 5433.
+- **Host directory ownership** — `/srv/immich-pg/data` must be owned by uid 999
+  (the postgres user inside the container), not root.
+
+```bash
+# One-time: create data directory with correct ownership
+ssh epyc "sudo mkdir -p /srv/immich-pg/data && sudo chown 999:999 /srv/immich-pg/data"
+
+# One-time: load secret into Nomad Variables (refresh when password changes)
+nomad var put nomad/jobs/immich-postgres \
+  POSTGRES_PASSWORD=$(op read op://HomeCluster/immich/POSTGRES_PASS)
+
+# Re-apply nomad role to register the host volume, then deploy
+ansible-playbook playbooks/site.yml --limit epyc --tags nomad
+nomad job run jobs/epyc/immich-postgres.nomad.hcl
 ```
 
-- [ ] Deploy Immich Postgres as Nomad job on port 5433
-- [ ] Restore immich database from the dump file produced in the Barman restore step:
-  `pg_restore -U immich -h localhost -p 5433 -d immich immich.dump`
+- [x] Deploy Immich Postgres as Nomad job on port 5433
+- [x] Restore immich database (see procedure below)
 - [ ] Verify Immich connects and VectorChord reindexes successfully
 
-### Dragonfly on epyc
+#### Immich database restore procedure
 
-- [ ] Deploy as Nomad job (stateless, no data to restore)
+The old k8s cluster used **pgvecto.rs** (`vectors` extension). The new Immich image uses
+**pgvector** (`vector`) and **VectorChord** (`vchord`) instead. A straight `pg_restore`
+doesn't work — the dump references `vectors.vector` types and pgvecto.rs HNSW indexes.
+Additional complications: `pg_restore -f | psql` over TCP triggers psql's backslash
+restriction (blocking COPY data), and the dump's SQL preamble resets `search_path` to
+empty (hiding the `vector` type from extensions). Solution: split the restore into three
+sections and handle each separately.
+
+```bash
+# Step 1: Build a filtered restore list (exclude the vectors extension)
+pg_restore --list /mnt/backups/pg-migration/immich.dump > /tmp/immich-restore.list
+grep -v 'EXTENSION - vectors\|EXTENSION vectors' /tmp/immich-restore.list > /tmp/immich-restore-filtered.list
+
+# Step 2: Generate pre-data and post-data SQL files
+pg_restore \
+  --use-list=/tmp/immich-restore-filtered.list \
+  --section=pre-data \
+  -f /tmp/immich-pre-data.sql \
+  /mnt/backups/pg-migration/immich.dump
+
+pg_restore \
+  --use-list=/tmp/immich-restore-filtered.list \
+  --section=post-data \
+  -f /tmp/immich-post-data.sql \
+  /mnt/backups/pg-migration/immich.dump
+
+# Step 3: Fix vectors.vector type references in both SQL files
+sed -i 's/vectors\.vector/vector/g' /tmp/immich-pre-data.sql /tmp/immich-post-data.sql
+
+# Step 4: Fix the psql backslash restriction and empty search_path in both SQL files
+# The dump includes \restrict <token> which re-enables psql's TCP security restriction
+# and resets search_path to '' which hides the vector type from extensions.
+sed -i 's/^\\restrict .*/\\unrestrict/' /tmp/immich-pre-data.sql /tmp/immich-post-data.sql
+sed -i "s/set_config('search_path', '', false)/set_config('search_path', 'public', false)/" \
+  /tmp/immich-pre-data.sql /tmp/immich-post-data.sql
+
+# Step 5: Fix the HNSW index syntax (pgvecto.rs uses USING vectors; pgvector uses USING hnsw)
+python3 << 'EOF'
+with open('/tmp/immich-post-data.sql', 'r') as f:
+    content = f.read()
+
+old_clip = """CREATE INDEX clip_index ON public.smart_search USING vectors (embedding vector_cos_ops) WITH (options='[indexing.hnsw]
+m = 16
+ef_construction = 300');"""
+
+old_face = """CREATE INDEX face_index ON public.face_search USING vectors (embedding vector_cos_ops) WITH (options='[indexing.hnsw]
+m = 16
+ef_construction = 300');"""
+
+content = content.replace(old_clip, "CREATE INDEX clip_index ON public.smart_search USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 300);")
+content = content.replace(old_face, "CREATE INDEX face_index ON public.face_search USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 300);")
+
+with open('/tmp/immich-post-data.sql', 'w') as f:
+    f.write(content)
+EOF
+
+# Step 6: Create fresh database
+psql -h 127.0.0.1 -p 5433 -U immich -d postgres -c "DROP DATABASE IF EXISTS immich;"
+psql -h 127.0.0.1 -p 5433 -U immich -d postgres -c "CREATE DATABASE immich OWNER immich;"
+
+# Step 7: Create extensions (must exist before schema is applied)
+psql -h 127.0.0.1 -p 5433 -U immich -d immich -c "
+  CREATE EXTENSION IF NOT EXISTS vector;
+  CREATE EXTENSION IF NOT EXISTS vchord;
+"
+
+# Step 8: Apply schema
+psql -h 127.0.0.1 -p 5433 -U immich -d immich -f /tmp/immich-pre-data.sql
+
+# Step 9: Load data — pg_restore handles COPY directly, no psql backslash issues
+pg_restore \
+  -h 127.0.0.1 -p 5433 \
+  -U immich \
+  --no-owner --no-privileges \
+  -d immich \
+  --section=data \
+  --use-list=/tmp/immich-restore-filtered.list \
+  /mnt/backups/pg-migration/immich.dump
+
+# Step 10: Apply indexes and constraints
+psql -h 127.0.0.1 -p 5433 -U immich -d immich -f /tmp/immich-post-data.sql
+
+# Verify: check table sizes
+psql -h 127.0.0.1 -p 5433 -U immich -d immich -c "
+  SELECT tablename, pg_size_pretty(pg_total_relation_size('public.'||tablename))
+  FROM pg_tables WHERE schemaname = 'public'
+  ORDER BY pg_total_relation_size('public.'||tablename) DESC LIMIT 10;
+"
+```
+
+Expected errors (harmless):
+- `\unrestrict: missing required argument` — version difference, schema still applied
+- `\unrestrict: not currently in restricted mode` — stray token at end of file
+- `relation "vectors.pg_vector_index_stat" does not exist` — pgvecto.rs system table GRANT, irrelevant
+
+### Valkey on epyc
+
+Valkey is stateless — no data to restore. Listens on port 6379 with host networking.
+Authentik and Immich both connect to `127.0.0.1:6379`.
+
+```bash
+nomad job run jobs/epyc/valkey.nomad.hcl
+```
+
+- [x] Deploy as Nomad job (stateless, no data to restore)
 
 ### Caddy reverse proxy on epyc
 
-- [ ] Build custom Caddy binary with `caddy-dns/cloudflare` plugin (via `xcaddy` or Docker image `caddy:builder`)
-- [ ] Configure Cloudflare API token for DNS challenge (Caddy needs this to get Let's Encrypt certs from a private LAN IP)
-- [ ] Write Caddyfile with routes for all apps (see Target State for full example)
-- [ ] Assign unique host ports per app (resolve placeholder port conflicts)
-- [ ] Deploy as Nomad job or systemd service on epyc
-- [ ] Verify HTTPS works for both internal (LAN) and external (tunnel) access
+Deployed as a systemd service via the `caddy` Ansible role. Binary downloaded from the
+Caddy download API with the `caddy-dns/cloudflare` plugin (v0.2.4) baked in. Cloudflare
+API token stored in 1Password and written to `/etc/caddy/env` by the role. Routes are
+managed via `caddy_routes` in `host_vars/epyc.yml` — add a route and re-run
+`--tags caddy` to deploy; Caddy reloads without dropping connections.
+
+```bash
+ansible-playbook playbooks/site.yml --limit epyc --tags caddy
+```
+
+- [x] Build custom Caddy binary with `caddy-dns/cloudflare` plugin
+- [x] Configure Cloudflare API token for DNS challenge
+- [x] Deploy as systemd service on epyc
+- [ ] Verify HTTPS works for both internal (LAN) and external (tunnel) access (after DNS + cloudflared are configured)
+- [ ] Routes to h4uno/h4dos/beelink1 will 502 until those nodes are up — expected
 
 ### Cloudflared tunnel on epyc
 
@@ -814,37 +997,32 @@ job "immich-postgres" {
 - [ ] Catch-all ingress rule pointing to Caddy's HTTPS listener (`service: https://localhost:443`)
 - [ ] Set `originServerName: groovie.org` so cloudflared validates Caddy's cert
 
-### Cloudflare DNS records (public apps, managed by Ansible)
+### DNS (do now, not later)
 
+Configure all DNS up front. LAN-only app hostnames will resolve to epyc's Caddy even
+before those apps' nodes are up — Caddy returns 502 until the backend exists, which
+is better than NXDOMAIN.
+
+**Cloudflare CNAME records (public apps):**
 - [ ] Define `public_apps` list in `group_vars/all.yml` (auth.groovie.org, paste.ofcode.org)
 - [ ] Create `cloudflare-dns` Ansible role (see Target State → DNS strategy for the task)
 - [ ] Run playbook to create CNAME records pointing to tunnel
 - [ ] Verify public apps resolve externally to Cloudflare
 
-### opnSense host overrides (managed by Ansible)
-
+**opnSense host overrides (all apps):**
 - [ ] Create API key+secret in opnSense (System → Access → Users) for Ansible
 - [ ] Install `ansibleguy.opnsense` collection: `ansible-galaxy collection install ansibleguy.opnsense`
 - [ ] Create `opnsense-dns` Ansible role (see Target State → DNS strategy for the task)
-- [ ] Run playbook to create all ~22 host overrides
+- [ ] Run playbook to create all ~22 host overrides pointing to 192.168.2.35
 - [ ] Verify LAN clients resolve all app hostnames to 192.168.2.35
-- [ ] Verify typos/non-existent names return NXDOMAIN
 
 ### Secrets (1Password CLI)
 
-- [ ] Install 1Password CLI (`op`) on all nodes via Ansible
+- [ ] Install 1Password CLI (`op`) on epyc via Ansible
 - [ ] Set up a 1Password service account for automated access (non-interactive deploys)
-- [ ] Verify `op read` can access the HomeCluster vault from each node
+- [ ] Verify `op read` can access the HomeCluster vault from epyc
 
----
-
-## Phase 3: Apps on epyc (compute-heavy)
-
-**Status:** 🔴 Not started
-
-Restore PVC backup data to `/srv/APP/` paths on epyc, then deploy Nomad jobs.
-
-### Data restoration
+### Data restoration (epyc apps)
 
 ```bash
 rsync -a /mnt/backup/immich/immich-data/ /srv/immich/data/
@@ -856,10 +1034,10 @@ rsync -a /mnt/backup/unifi/unifi/ /srv/unifi/config/
 rsync -a /mnt/backup/duketogo/duketogo-config/ /srv/duketogo/config/
 ```
 
-### Apps to deploy
+### Apps to deploy on epyc
 
 - [ ] Immich (server + ML) — host volume: data; connects to Immich Postgres on localhost:5433
-- [ ] Authentik (server + worker) — connects to Postgres local + Dragonfly local
+- [ ] Authentik (server + worker) — connects to Postgres local + Valkey local
 - [ ] Vaultwarden — host volume: config; connects to Postgres local
 - [ ] Windmill — connects to Postgres local
 - [ ] Linkwarden — Postgres local + config volume
@@ -870,6 +1048,8 @@ rsync -a /mnt/backup/duketogo/duketogo-config/ /srv/duketogo/config/
 - [ ] DukeTogo — config volume
 - [ ] Paste — config volume
 - [ ] SMTP Relay — stateless
+- [ ] Beszel agent
+- [ ] Dozzle
 
 ### Example Nomad job (Immich)
 
@@ -909,8 +1089,8 @@ job "immich" {
       }
 
       env {
-        DB_HOSTNAME = "127.0.0.1"
-        DB_PORT     = "5433"         # Immich's dedicated Postgres container
+        DB_HOSTNAME      = "127.0.0.1"
+        DB_PORT          = "5433"
         DB_DATABASE_NAME = "immich"
         REDIS_HOSTNAME   = "127.0.0.1"
       }
@@ -924,16 +1104,30 @@ job "immich" {
 }
 ```
 
+### Networking setup
+
+- [x] epyc primary IP: 192.168.2.35 — configured via `base` role ✅
+- [x] epyc secondary IP: 192.168.2.202 — configured via `base` role ✅
+- [ ] opnSense: create API key for Ansible, reserve all IPs in DHCP
+- [ ] opnSense DNS: run `opnsense-dns` playbook (see DNS section above)
+- [ ] Cloudflare DNS: run `cloudflare-dns` playbook (see DNS section above)
+- [ ] Cloudflared tunnel on epyc with catch-all to Caddy
+- [ ] Unifi devices already inform to 192.168.2.202 — no re-adoption needed
+
 ---
 
-## Phase 4: Apps on h4uno (media serving + libraries)
+## Phase 2: h4uno — Media Serving + Libraries
 
 **Status:** 🔴 Not started
 
+Re-image h4uno last — it's currently running most k8s workloads. Scale them down
+before wiping. After re-imaging: run `base`, `docker`, `nomad`, `onepassword`,
+`nfs` (server), `monitoring`, and `backup` roles, then restore data and deploy jobs.
+
 ### NFS server setup
 
-h4uno exports `/srv/data` to h4dos. This single export contains downloads, video, music,
-and books — so hard-links work from downloads into media directories.
+h4uno exports `/srv/data` to h4dos. This single export contains downloads, video,
+music, and books — so hard-links work from downloads into media directories.
 
 ```bash
 # /etc/exports on h4uno
@@ -954,6 +1148,16 @@ Directory structure on h4uno:
 /srv/komga/assets/      ← Komga assets (local)
 ...etc per app
 ```
+
+### Ansible roles for h4uno
+
+- [ ] `base`
+- [ ] `docker`
+- [ ] `nomad` (client only — connects to epyc:4647)
+- [ ] `onepassword`
+- [ ] `nfs` (server — exports `/srv/data`)
+- [ ] `monitoring` (Beszel agent + Beszel hub + Dozzle)
+- [ ] `backup` (Restic for app configs)
 
 ### Data restoration
 
@@ -982,14 +1186,17 @@ rsync -a /mnt/backup/music-assistant/music-assistant-config/ /srv/music-assistan
 - [ ] Calibre-Web — config (local) + `/srv/data/books/`
 - [ ] OCIS — data (local)
 - [ ] Music Assistant — config (local) + `/srv/data/music/`
-- [ ] Beszel hub — monitoring dashboard (fresh install, no data to restore)
-- [ ] Dozzle — Docker log viewer (fresh install, runs on each node as Nomad system job)
+- [ ] Beszel hub — fresh install, no data to restore
+- [ ] Dozzle
 
 ---
 
-## Phase 5: Apps on h4dos (download automation)
+## Phase 3: h4dos — Download Automation
 
 **Status:** 🔴 Not started
+
+After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, `nfs` (client),
+`monitoring`, and `backup` roles, then restore configs and deploy jobs.
 
 ### NFS client setup
 
@@ -1004,6 +1211,16 @@ media library (instant, zero copy).
 
 If h4uno goes down, NFS mounts go stale and *arr apps can't write. This is fine —
 Plex is also on h4uno, so there's nothing to serve media to anyway.
+
+### Ansible roles for h4dos
+
+- [ ] `base`
+- [ ] `docker`
+- [ ] `nomad` (client only — connects to epyc:4647)
+- [ ] `onepassword`
+- [ ] `nfs` (client — mounts h4uno:/srv/data at /mnt/data)
+- [ ] `monitoring` (Beszel agent + Dozzle)
+- [ ] `backup` (Restic for app configs)
 
 ### Data restoration
 
@@ -1026,9 +1243,22 @@ rsync -a /mnt/backup/sabnzbd/sabnzbd-config/ /srv/sabnzbd/config/
 
 ---
 
-## Phase 6: Frigate on beelink1
+## Phase 4: beelink1 — Frigate
 
 **Status:** 🔴 Not started
+
+After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, and `monitoring`
+roles, then restore config and deploy the Frigate job.
+
+### Ansible roles for beelink1
+
+- [ ] `base`
+- [ ] `docker`
+- [ ] `nomad` (client only — connects to epyc:4647)
+- [ ] `onepassword`
+- [ ] `monitoring` (Beszel agent + Dozzle)
+
+### Apps to deploy
 
 - [ ] Install Intel GPU drivers + Coral TPU drivers via Ansible
 - [ ] Restore Frigate config from backup

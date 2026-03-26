@@ -1,0 +1,70 @@
+---
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Add PGDG GPG key
+  ansible.builtin.get_url:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    dest: /etc/apt/keyrings/pgdg.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add PGDG apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/pgdg.asc]
+      https://apt.postgresql.org/pub/repos/apt
+      {{ ansible_facts["distribution_release"] }}-pgdg main
+    state: present
+    filename: pgdg
+
+- name: Install PostgreSQL {{ postgres_version }}
+  ansible.builtin.apt:
+    name:
+      - "postgresql-{{ postgres_version }}"
+      - "postgresql-client-{{ postgres_version }}"
+    state: present
+    update_cache: true
+
+- name: Ensure PostgreSQL is started and enabled
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Drop tuned config override
+  ansible.builtin.template:
+    src: 99-homestar.conf.j2
+    dest: "{{ postgres_config_dir }}/conf.d/99-homestar.conf"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: restart postgresql
+
+- name: Allow LAN connections in pg_hba.conf
+  ansible.builtin.lineinfile:
+    path: "{{ postgres_config_dir }}/pg_hba.conf"
+    line: "host    all             all             {{ postgres_hba_lan_subnet }}         scram-sha-256"
+    regexp: "^host\\s+all\\s+all\\s+{{ postgres_hba_lan_subnet | regex_escape }}"
+    state: present
+  notify: reload postgresql
+
+- name: Set postgres superuser password
+  become: true
+  become_user: postgres
+  ansible.builtin.command:
+    cmd: psql -c "ALTER USER postgres PASSWORD '{{ postgres_superuser_password }}';"
+  no_log: true
+  changed_when: false
+
+- name: Allow PostgreSQL through ufw
+  community.general.ufw:
+    rule: allow
+    port: "5432"
+    proto: tcp

@@ -1,0 +1,9 @@
+{
+  acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}
+{% for route in caddy_routes %}
+
+{{ route.hostname }} {
+  reverse_proxy {{ route.backend }}
+}
+{% endfor %}
