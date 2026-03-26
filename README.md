@@ -20,6 +20,7 @@ The first implemented milestone is bootstrapping `epyc` from a fresh Ubuntu
 - `playbooks/site.yml`: baseline playbook for hosts already reachable at their
   canonical addresses
 - `roles/base/`: first-pass OS baseline and `epyc` netplan management
+- `roles/onepassword/`: installs the 1Password CLI on `epyc`
 
 ## Controller Prerequisites
 
@@ -85,6 +86,10 @@ Planned integrations already have placeholders ready for later roles:
 
 The expected 1Password item references are tracked in
 `inventories/production/group_vars/all.yml`.
+
+The `onepassword` role installs the `op` CLI on `epyc` using the official
+1Password apt repository and debsig policy. Service-account or signin
+configuration still happens separately once the CLI is present.
 
 ## Notes
 

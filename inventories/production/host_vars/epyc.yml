@@ -13,8 +13,6 @@ nomad_host_volumes:
   - name: immich-pg-data
     path: /srv/immich-pg/data
 
-caddy_routes: []
-# Routes are added here as apps are deployed, e.g.:
-# caddy_routes:
-#   - hostname: photos.groovie.org
-#     backend: localhost:2283
+caddy_routes:
+  - hostname: auth.groovie.org
+    backend: localhost:9000

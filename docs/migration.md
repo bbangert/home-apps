@@ -1055,22 +1055,37 @@ ansible-playbook playbooks/site.yml --tags opnsense-dns
 - [x] Set up a 1Password service account with token exported via `/etc/profile.d/1password.sh`
 - [x] Verify `op read` can access the HomeCluster vault from epyc
 
-### Data restoration (epyc apps)
+### Data restoration (epyc apps) ✅ Complete
+
+Backup data was on the workstation at `/run/media/ben/Archive/ClusterBackup/`. Rsynced
+to epyc over SSH with `sudo rsync` to preserve ownership:
 
 ```bash
-rsync -a /mnt/backup/immich/immich-data/ /srv/immich/data/
-rsync -a /mnt/backup/vaultwarden/vaultwarden/ /srv/vaultwarden/config/
-rsync -a /mnt/backup/freshrss/freshrss/ /srv/freshrss/config/
-rsync -a /mnt/backup/linkwarden/linkwarden/ /srv/linkwarden/config/
-rsync -a /mnt/backup/thelounge/thelounge/ /srv/thelounge/config/
-rsync -a /mnt/backup/unifi/unifi/ /srv/unifi/config/
-rsync -a /mnt/backup/duketogo/duketogo-config/ /srv/duketogo/config/
+SRC=/run/media/ben/Archive/ClusterBackup
+
+ssh epyc "sudo mkdir -p /srv/immich/data /srv/vaultwarden/config /srv/freshrss/config \
+  /srv/linkwarden/config /srv/thelounge/config /srv/unifi/config /srv/duketogo/config \
+  /srv/paste/config"
+
+rsync -avP --rsync-path="sudo rsync" $SRC/immich/immich-data/ epyc:/srv/immich/data/
+rsync -avP --rsync-path="sudo rsync" $SRC/vaultwarden/vaultwarden/ epyc:/srv/vaultwarden/config/
+rsync -avP --rsync-path="sudo rsync" $SRC/freshrss/freshrss/ epyc:/srv/freshrss/config/
+rsync -avP --rsync-path="sudo rsync" $SRC/linkwarden/linkwarden/ epyc:/srv/linkwarden/config/
+rsync -avP --rsync-path="sudo rsync" $SRC/thelounge/thelounge/ epyc:/srv/thelounge/config/
+rsync -avP --rsync-path="sudo rsync" $SRC/unifi/unifi/ epyc:/srv/unifi/config/
+rsync -avP --rsync-path="sudo rsync" $SRC/duketogo/duketogo-config/ epyc:/srv/duketogo/config/
+rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
 ```
 
 ### Apps to deploy on epyc
 
 - [ ] Immich (server + ML) — host volume: data; connects to Immich Postgres on localhost:5433
-- [ ] Authentik (server + worker) — connects to Postgres local + Valkey local
+- [x] Authentik (server + worker) — connects to Postgres local + Valkey local
+  - Custom theme assets (logo, background, CSS) stored in `jobs/epyc/authentik-assets/`
+    and must be synced to `/srv/authentik/assets/` on epyc before deploying:
+    `rsync -avP --rsync-path="sudo rsync" jobs/epyc/authentik-assets/ epyc:/srv/authentik/assets/`
+  - DB role needs password + ownership: `ALTER ROLE authentik WITH PASSWORD '...'; ALTER DATABASE authentik OWNER TO authentik;`
+  - Grant table access: `GRANT ALL ON ALL TABLES/SEQUENCES/FUNCTIONS IN SCHEMA public TO authentik;`
 - [ ] Vaultwarden — host volume: config; connects to Postgres local
 - [ ] Windmill — connects to Postgres local
 - [ ] Linkwarden — Postgres local + config volume

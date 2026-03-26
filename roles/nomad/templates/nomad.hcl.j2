@@ -8,6 +8,14 @@ server {
 }
 
 {% endif %}
+plugin "docker" {
+  config {
+    volumes {
+      enabled = true
+    }
+  }
+}
+
 client {
   enabled = true
 {% if inventory_hostname not in groups['nomad_server'] %}
