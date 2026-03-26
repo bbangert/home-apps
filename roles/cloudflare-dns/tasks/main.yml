@@ -1,0 +1,13 @@
+---
+- name: Create CNAME records for public apps
+  community.general.cloudflare_dns:
+    zone: "{{ item.zone }}"
+    record: "{{ item.name }}"
+    type: CNAME
+    value: "{{ cloudflare_tunnel_cname }}"
+    proxied: true
+    api_token: "{{ cloudflare_api_token }}"
+    state: present
+  loop: "{{ public_apps }}"
+  loop_control:
+    label: "{{ item.name }}.{{ item.zone }}"

@@ -566,8 +566,8 @@ Roles that exist in this repo and their status:
 - [x] `onepassword` — applied ✅
 - [x] `postgres` — applied ✅
 - [x] `caddy` — applied ✅
-- [ ] `cloudflare-dns` — not yet written
-- [ ] `opnsense-dns` — not yet written
+- [x] `cloudflare-dns` — applied ✅
+- [x] `opnsense-dns` — applied ✅
 - [ ] `monitoring` — not yet written (Beszel agent + Dozzle)
 - [ ] `backup` — not yet written (pgBackRest + Restic)
 - [ ] `nfs` — not yet written (needed for Phase 2/3)
@@ -993,9 +993,33 @@ ansible-playbook playbooks/site.yml --limit epyc --tags caddy
 
 ### Cloudflared tunnel on epyc
 
-- [ ] Deploy cloudflared as Nomad job with tunnel credentials from 1Password
-- [ ] Catch-all ingress rule pointing to Caddy's HTTPS listener (`service: https://localhost:443`)
-- [ ] Set `originServerName: groovie.org` so cloudflared validates Caddy's cert
+A **new** tunnel (`e30c91ae-29eb-4b4b-9a9c-c41df2dc7b90`) was created for epyc,
+separate from the existing k8s tunnel (`external.groovie.org`). This allows gradual
+migration — as each app is deployed on epyc, its CNAME is updated from the old tunnel
+to `e30c91ae-29eb-4b4b-9a9c-c41df2dc7b90.cfargotunnel.com`. The old k8s tunnel stays
+active until all apps are migrated.
+
+Deployed as a locally-managed Nomad job with a catch-all ingress to Caddy. Cloudflared
+preserves the original hostname from the Cloudflare edge, so Caddy receives the correct
+`Host` header and serves the matching TLS cert automatically.
+
+```bash
+# One-time: create tunnel (run from workstation with cloudflared installed)
+cloudflared tunnel login
+cloudflared tunnel create epyc
+
+# One-time: store credentials in Nomad Variables
+nomad var put nomad/jobs/cloudflared \
+  TUNNEL_CREDENTIALS="$(cat ~/.cloudflared/e30c91ae-29eb-4b4b-9a9c-c41df2dc7b90.json)"
+
+# Deploy
+nomad job run jobs/epyc/cloudflared.nomad.hcl
+```
+
+- [x] Create new tunnel for epyc
+- [x] Store tunnel credentials in Nomad Variables
+- [x] Deploy cloudflared as Nomad job with catch-all ingress to Caddy
+- [ ] Verify external access works (after first app + DNS CNAME is configured)
 
 ### DNS (do now, not later)
 
@@ -1004,23 +1028,32 @@ before those apps' nodes are up — Caddy returns 502 until the backend exists, 
 is better than NXDOMAIN.
 
 **Cloudflare CNAME records (public apps):**
-- [ ] Define `public_apps` list in `group_vars/all.yml` (auth.groovie.org, paste.ofcode.org)
-- [ ] Create `cloudflare-dns` Ansible role (see Target State → DNS strategy for the task)
-- [ ] Run playbook to create CNAME records pointing to tunnel
-- [ ] Verify public apps resolve externally to Cloudflare
+
+Public app CNAMEs are updated per-app as they're deployed on epyc. Each CNAME switches
+from the old k8s tunnel (`external.groovie.org`) to the new epyc tunnel
+(`e30c91ae-29eb-4b4b-9a9c-c41df2dc7b90.cfargotunnel.com`).
+
+- [x] Create `cloudflare-dns` Ansible role
+- [x] Run playbook to create CNAME records for public apps pointing to new tunnel
+- [ ] Verify public apps resolve externally to Cloudflare (after apps are deployed)
 
 **opnSense host overrides (all apps):**
-- [ ] Create API key+secret in opnSense (System → Access → Users) for Ansible
-- [ ] Install `ansibleguy.opnsense` collection: `ansible-galaxy collection install ansibleguy.opnsense`
-- [ ] Create `opnsense-dns` Ansible role (see Target State → DNS strategy for the task)
-- [ ] Run playbook to create all ~22 host overrides pointing to 192.168.2.35
+- [x] Create API key+secret in opnSense, stored in 1Password
+- [x] Install `ansibleguy.opnsense` collection
+- [x] Create `opnsense-dns` Ansible role
+- [x] Run playbook to create all ~22 host overrides pointing to 192.168.2.35
 - [ ] Verify LAN clients resolve all app hostnames to 192.168.2.35
+
+```bash
+ansible-playbook playbooks/site.yml --tags cloudflare-dns
+ansible-playbook playbooks/site.yml --tags opnsense-dns
+```
 
 ### Secrets (1Password CLI)
 
-- [ ] Install 1Password CLI (`op`) on epyc via Ansible
-- [ ] Set up a 1Password service account for automated access (non-interactive deploys)
-- [ ] Verify `op read` can access the HomeCluster vault from epyc
+- [x] Install 1Password CLI (`op`) on epyc via Ansible
+- [x] Set up a 1Password service account with token exported via `/etc/profile.d/1password.sh`
+- [x] Verify `op read` can access the HomeCluster vault from epyc
 
 ### Data restoration (epyc apps)
 

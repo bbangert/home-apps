@@ -1,0 +1,27 @@
+---
+- name: Create Unbound host overrides for all apps
+  ansibleguy.opnsense.unbound_host:
+    hostname: "{{ item.name }}"
+    domain: "{{ item.zone }}"
+    value: "{{ caddy_ip }}"
+    description: "homestar-{{ item.name }}"
+    reload: false
+  loop: "{{ all_apps }}"
+  loop_control:
+    label: "{{ item.name }}.{{ item.zone }}"
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ opnsense_host }}"
+      api_key: "{{ opnsense_api_key }}"
+      api_secret: "{{ opnsense_api_secret }}"
+      ssl_verify: false
+
+- name: Reload Unbound
+  ansibleguy.opnsense.reload:
+    target: unbound
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ opnsense_host }}"
+      api_key: "{{ opnsense_api_key }}"
+      api_secret: "{{ opnsense_api_secret }}"
+      ssl_verify: false

@@ -1,0 +1,6 @@
+---
+opnsense_host: "{{ homestar_gateway_ipv4 }}"
+opnsense_api_key: >-
+  {{ lookup('pipe', 'op read ' + onepassword_item_paths.opnsense_api_key) }}
+opnsense_api_secret: >-
+  {{ lookup('pipe', 'op read ' + onepassword_item_paths.opnsense_api_secret) }}

@@ -1,0 +1,4 @@
+---
+cloudflare_api_token: >-
+  {{ lookup('pipe', 'op read ' + onepassword_item_paths.cloudflare_api_token) }}
+cloudflare_tunnel_cname: "{{ tunnel_id }}.cfargotunnel.com"

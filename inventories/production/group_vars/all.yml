@@ -9,7 +9,7 @@ homestar_domains:
 
 nomad_datacenter: homestar
 onepassword_vault: HomeCluster
-tunnel_id: your-tunnel-id
+tunnel_id: e30c91ae-29eb-4b4b-9a9c-c41df2dc7b90
 caddy_ip: 192.168.2.35
 
 all_apps:
