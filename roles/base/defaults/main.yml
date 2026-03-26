@@ -20,6 +20,7 @@ base_core_packages:
   - rsync
   - ca-certificates
   - gnupg
+base_extra_firewall_ports: []
 base_base_directories:
   - /srv
   - /opt/nomad

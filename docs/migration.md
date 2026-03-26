@@ -1079,7 +1079,7 @@ rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
 
 ### Apps to deploy on epyc
 
-- [ ] Immich (server + ML) — host volume: data; connects to Immich Postgres on localhost:5433
+- [x] Immich (server + ML v2.6.2) — host volume: data; connects to Immich Postgres on localhost:5433
 - [x] Authentik (server + worker) — connects to Postgres local + Valkey local
   - Custom theme assets (logo, background, CSS) stored in `jobs/epyc/authentik-assets/`
     and must be synced to `/srv/authentik/assets/` on epyc before deploying:
@@ -1089,10 +1089,17 @@ rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
 - [ ] Vaultwarden — host volume: config; connects to Postgres local
 - [ ] Windmill — connects to Postgres local
 - [ ] Linkwarden — Postgres local + config volume
-- [ ] FreshRSS — Postgres local + config volume
+- [x] FreshRSS — Postgres local + config volume (port 8082)
+  - OIDC secrets from 1Password `freshrss` item, DB creds from `freshrss` item
+  - Restored config had old k8s DB host — updated to `127.0.0.1` in `/srv/freshrss/config/config.php`
+  - DB user password and table grants needed: `ALTER USER freshrss WITH PASSWORD '...'; GRANT ALL ON ALL TABLES/SEQUENCES IN SCHEMA public TO freshrss;`
 - [ ] Atuin — Postgres local
 - [ ] TheLounge — config volume
-- [ ] Unifi Controller — config volume
+- [x] Unifi Controller — config volume (jacobalberty/unifi:v10.0.162)
+  - Restored from backup via setup wizard at `https://<ip>:8443` directly (not through Caddy — restore upload fails via reverse proxy)
+  - Caddy reverse proxy requires `header_up Host {hostport}` for HTTPS backends (Caddy 2.11+ changed default behavior)
+  - UFW ports needed: 8443/tcp, 8080/tcp, 3478/udp, 10001/udp, 5514/udp, 6789/tcp, 8843/tcp, 8880/tcp
+  - Added `base_extra_firewall_ports` to base role for per-host UFW rules
 - [ ] DukeTogo — config volume
 - [ ] Paste — config volume
 - [ ] SMTP Relay — stateless

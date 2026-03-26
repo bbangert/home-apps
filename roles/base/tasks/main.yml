@@ -96,6 +96,18 @@
     - base_apply_baseline | bool
     - base_manage_firewall | bool
 
+- name: Allow extra ports through ufw
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto | default('tcp') }}"
+  loop: "{{ base_extra_firewall_ports }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.proto | default('tcp') }}"
+  when:
+    - base_apply_baseline | bool
+    - base_manage_firewall | bool
+
 - name: Set ufw default incoming policy
   community.general.ufw:
     direction: incoming

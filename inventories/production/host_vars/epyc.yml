@@ -9,10 +9,36 @@ homestar_ipv4_addresses:
 homestar_service_ip: 192.168.2.35
 homestar_unifi_ip: 192.168.2.202
 
+base_extra_firewall_ports:
+  - { port: "8443", proto: tcp }
+  - { port: "8080", proto: tcp }
+  - { port: "3478", proto: udp }
+  - { port: "10001", proto: udp }
+  - { port: "5514", proto: udp }
+  - { port: "6789", proto: tcp }
+  - { port: "8843", proto: tcp }
+  - { port: "8880", proto: tcp }
+
 nomad_host_volumes:
   - name: immich-pg-data
     path: /srv/immich-pg/data
+  - name: immich-data
+    path: /srv/immich/data
+  - name: immich-ml-cache
+    path: /srv/immich/ml-cache
+  - name: unifi-config
+    path: /srv/unifi/config
+  - name: unifi-db
+    path: /srv/unifi/db
+  - name: freshrss-config
+    path: /srv/freshrss/config
 
 caddy_routes:
   - hostname: auth.groovie.org
     backend: localhost:9000
+  - hostname: photos.groovie.org
+    backend: localhost:2283
+  - hostname: unifi.groovie.org
+    backend: https://localhost:8443
+  - hostname: freshrss.groovie.org
+    backend: localhost:8082

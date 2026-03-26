@@ -4,6 +4,13 @@
 {% for route in caddy_routes %}
 
 {{ route.hostname }} {
-  reverse_proxy {{ route.backend }}
+  reverse_proxy {{ route.backend }} {
+{% if route.backend.startswith('https://') %}
+    header_up Host {hostport}
+    transport http {
+      tls_insecure_skip_verify
+    }
+{% endif %}
+  }
 }
 {% endfor %}
