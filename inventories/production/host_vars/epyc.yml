@@ -35,6 +35,8 @@ nomad_host_volumes:
     path: /srv/freshrss/config
   - name: vaultwarden-config
     path: /srv/vaultwarden/config
+  - name: linkwarden-config
+    path: /srv/linkwarden/config
 
 caddy_routes:
   - hostname: auth.groovie.org
@@ -47,3 +49,5 @@ caddy_routes:
     backend: localhost:8082
   - hostname: vaultwarden.groovie.org
     backend: localhost:8081
+  - hostname: link.groovie.org
+    backend: localhost:3000

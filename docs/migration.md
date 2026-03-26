@@ -465,8 +465,8 @@ data on NVMe, backup on SATA, offsite copy on S3.
 
 | What | How | Local (SATA) | Offsite (S3) |
 |------|-----|-------------|--------------|
-| PostgreSQL 17 (shared) | pgBackRest (WAL archiving + daily base) | `/mnt/backups/pgbackrest/` | S3 (Cloudflare R2 or Backblaze B2) |
-| Immich Postgres (Docker) | pg_dump on schedule | `/mnt/backups/immich-pg/` | S3 |
+| PostgreSQL 17 (shared) | pgBackRest (WAL archiving + daily base) | `/mnt/backups/pgbackrest/` | S3 (`s3://homestar-cloudnative-pg/pgbackrest/homestar-pg17`) ✅ |
+| Immich Postgres (Docker) | pg_dump on schedule (Nomad periodic job) | `/mnt/backups/immich-pg/` | — (local only for now) ✅ |
 | App config volumes | Restic | `/mnt/backups/restic/` | S3 |
 | Media (music/video/books) | Restic or rclone | — (too large for SATA) | S3 / second drive |
 
@@ -569,7 +569,9 @@ Roles that exist in this repo and their status:
 - [x] `cloudflare-dns` — applied ✅
 - [x] `opnsense-dns` — applied ✅
 - [ ] `monitoring` — not yet written (Beszel agent + Dozzle)
-- [ ] `backup` — not yet written (pgBackRest + Restic)
+- [x] `backup` (pgBackRest) — added to `postgres` role; WAL streaming to local + S3, daily full + hourly diff
+  - Immich Postgres backed up via `immich-pg-backup` Nomad periodic job (daily pg_dump)
+  - [ ] Restic for app config volumes — not yet written
 - [ ] `nfs` — not yet written (needed for Phase 2/3)
 
 ### SATA backup drive
@@ -1091,7 +1093,10 @@ rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
   - DB needs schema grant: `GRANT ALL ON SCHEMA public TO vaultwarden;`
   - SMTP via smtp-relay.groovie.org:25
 - [ ] Windmill — connects to Postgres local
-- [ ] Linkwarden — Postgres local + config volume
+- [x] Linkwarden — Postgres local + config volume (port 3000, v2.14.0)
+  - Authentik SSO + OpenAI auto-tagging enabled
+  - Run `npx playwright install chromium` in container for link preservation
+  - DB needs ownership: `REASSIGN OWNED` + schema grant
 - [x] FreshRSS — Postgres local + config volume (port 8082)
   - OIDC secrets from 1Password `freshrss` item, DB creds from `freshrss` item
   - Restored config had old k8s DB host — updated to `127.0.0.1` in `/srv/freshrss/config/config.php`

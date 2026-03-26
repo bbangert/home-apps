@@ -16,3 +16,15 @@ postgres_hba_lan_subnet: 192.168.2.0/24
 # Superuser password — pulled from 1Password at playbook run time
 postgres_superuser_password: >-
   {{ lookup('pipe', 'op read ' + onepassword_item_paths.postgres_superuser_password) }}
+
+# pgBackRest
+postgres_pgbackrest_enabled: true
+postgres_pgbackrest_stanza: homestar-pg17
+postgres_pgbackrest_repo_local_path: /mnt/backups/pgbackrest
+postgres_pgbackrest_s3_bucket: homestar-cloudnative-pg
+postgres_pgbackrest_s3_region: us-east-1
+postgres_pgbackrest_s3_endpoint: s3.amazonaws.com
+postgres_pgbackrest_s3_key: >-
+  {{ lookup('pipe', 'op read ' + onepassword_item_paths.aws_access_key_id) }}
+postgres_pgbackrest_s3_secret: >-
+  {{ lookup('pipe', 'op read ' + onepassword_item_paths.aws_secret_access_key) }}

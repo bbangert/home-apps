@@ -68,3 +68,86 @@
     rule: allow
     port: "5432"
     proto: tcp
+
+# pgBackRest
+- name: Install pgBackRest
+  ansible.builtin.apt:
+    name: pgbackrest
+    state: present
+  when: postgres_pgbackrest_enabled | bool
+
+- name: Create pgBackRest local repo directory
+  ansible.builtin.file:
+    path: "{{ postgres_pgbackrest_repo_local_path }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0750"
+  when: postgres_pgbackrest_enabled | bool
+
+- name: Create pgBackRest config directory
+  ansible.builtin.file:
+    path: /etc/pgbackrest
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0750"
+  when: postgres_pgbackrest_enabled | bool
+
+- name: Write pgBackRest config
+  ansible.builtin.template:
+    src: pgbackrest.conf.j2
+    dest: /etc/pgbackrest/pgbackrest.conf
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  when: postgres_pgbackrest_enabled | bool
+
+- name: Enable WAL archiving in PostgreSQL
+  ansible.builtin.blockinfile:
+    path: "{{ postgres_config_dir }}/conf.d/99-homestar.conf"
+    marker: "# {mark} pgBackRest WAL archiving"
+    block: |
+      archive_mode               = on
+      archive_command            = 'pgbackrest --stanza={{ postgres_pgbackrest_stanza }} archive-push %p'
+      archive_timeout            = 60
+      wal_level                  = replica
+  notify: restart postgresql
+  when: postgres_pgbackrest_enabled | bool
+
+- name: Create pgBackRest stanza
+  become: true
+  become_user: postgres
+  ansible.builtin.command:
+    cmd: pgbackrest --stanza={{ postgres_pgbackrest_stanza }} stanza-create
+  register: stanza_result
+  changed_when: "'already exists' not in stanza_result.stderr"
+  failed_when: stanza_result.rc != 0 and 'already exists' not in stanza_result.stderr
+  when: postgres_pgbackrest_enabled | bool
+
+- name: Create pgBackRest backup cron (daily full — local)
+  ansible.builtin.cron:
+    name: "pgbackrest daily full backup (local)"
+    user: postgres
+    hour: "2"
+    minute: "0"
+    job: "pgbackrest --stanza={{ postgres_pgbackrest_stanza }} --repo=1 --type=full backup 2>&1 | logger -t pgbackrest"
+  when: postgres_pgbackrest_enabled | bool
+
+- name: Create pgBackRest backup cron (daily full — S3)
+  ansible.builtin.cron:
+    name: "pgbackrest daily full backup (s3)"
+    user: postgres
+    hour: "2"
+    minute: "30"
+    job: "pgbackrest --stanza={{ postgres_pgbackrest_stanza }} --repo=2 --type=full backup 2>&1 | logger -t pgbackrest"
+  when: postgres_pgbackrest_enabled | bool
+
+- name: Create pgBackRest backup cron (hourly diff — local)
+  ansible.builtin.cron:
+    name: "pgbackrest hourly diff backup (local)"
+    user: postgres
+    minute: "0"
+    hour: "3-23"
+    job: "pgbackrest --stanza={{ postgres_pgbackrest_stanza }} --repo=1 --type=diff backup 2>&1 | logger -t pgbackrest"
+  when: postgres_pgbackrest_enabled | bool
