@@ -10,12 +10,9 @@ job "immich" {
   group "immich" {
     network {
       mode = "host"
-      port "http" {
-        static = 2283
-      }
-      port "ml" {
-        static = 3003
-      }
+      port "http" { static = 2283 }
+      port "ml"   { static = 3003 }
+      port "pg"   { static = 5433 }
     }
 
     volume "data" {
@@ -30,11 +27,58 @@ job "immich" {
       read_only = false
     }
 
+    volume "pg-data" {
+      type      = "host"
+      source    = "immich-pg-data"
+      read_only = false
+    }
+
     restart {
       attempts = 3
       interval = "5m"
       delay    = "15s"
       mode     = "fail"
+    }
+
+    task "postgres" {
+      driver = "docker"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
+      config {
+        image        = "ghcr.io/immich-app/postgres:17-vectorchord0.5.3-pgvector0.8.1"
+        network_mode = "host"
+        ports        = ["pg"]
+      }
+
+      volume_mount {
+        volume      = "pg-data"
+        destination = "/var/lib/postgresql/data"
+      }
+
+      template {
+        data        = <<EOF
+{{ with nomadVar "nomad/jobs/immich" -}}
+POSTGRES_PASSWORD={{ .DB_PASSWORD }}
+{{- end }}
+EOF
+        destination = "secrets/db.env"
+        env         = true
+      }
+
+      env {
+        POSTGRES_DB   = "immich"
+        POSTGRES_USER = "immich"
+        PGPORT        = "5433"
+      }
+
+      resources {
+        cpu    = 1000
+        memory = 2048
+      }
     }
 
     task "server" {
@@ -62,14 +106,14 @@ EOF
       }
 
       env {
-        DB_HOSTNAME                  = "127.0.0.1"
-        DB_PORT                      = "5433"
-        DB_DATABASE_NAME             = "immich"
-        DB_USERNAME                  = "immich"
-        REDIS_HOSTNAME               = "127.0.0.1"
-        REDIS_PORT                   = "6379"
-        REDIS_DBINDEX                = "2"
-        IMMICH_MACHINE_LEARNING_URL  = "http://127.0.0.1:3003"
+        DB_HOSTNAME                 = "127.0.0.1"
+        DB_PORT                     = "5433"
+        DB_DATABASE_NAME            = "immich"
+        DB_USERNAME                 = "immich"
+        REDIS_HOSTNAME              = "127.0.0.1"
+        REDIS_PORT                  = "6379"
+        REDIS_DBINDEX               = "2"
+        IMMICH_MACHINE_LEARNING_URL = "http://127.0.0.1:3003"
       }
 
       resources {

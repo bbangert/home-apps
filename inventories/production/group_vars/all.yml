@@ -57,6 +57,8 @@ all_apps:
     name: windmill
   - zone: ofcode.org
     name: paste
+  - zone: groovie.org
+    name: smtp-relay
 
 public_apps:
   - zone: groovie.org

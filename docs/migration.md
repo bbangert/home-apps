@@ -1079,14 +1079,17 @@ rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
 
 ### Apps to deploy on epyc
 
-- [x] Immich (server + ML v2.6.2) — host volume: data; connects to Immich Postgres on localhost:5433
+- [x] Immich (server + ML v2.6.2 + Postgres 17) — consolidated into single Nomad job with Postgres as prestart sidecar
 - [x] Authentik (server + worker) — connects to Postgres local + Valkey local
   - Custom theme assets (logo, background, CSS) stored in `jobs/epyc/authentik-assets/`
     and must be synced to `/srv/authentik/assets/` on epyc before deploying:
     `rsync -avP --rsync-path="sudo rsync" jobs/epyc/authentik-assets/ epyc:/srv/authentik/assets/`
   - DB role needs password + ownership: `ALTER ROLE authentik WITH PASSWORD '...'; ALTER DATABASE authentik OWNER TO authentik;`
   - Grant table access: `GRANT ALL ON ALL TABLES/SEQUENCES/FUNCTIONS IN SCHEMA public TO authentik;`
-- [ ] Vaultwarden — host volume: config; connects to Postgres local
+- [x] Vaultwarden — host volume: config; connects to Postgres local (port 8081)
+  - DB creds from 1Password `vaultwarden` item; admin token must be Argon2id hashed
+  - DB needs schema grant: `GRANT ALL ON SCHEMA public TO vaultwarden;`
+  - SMTP via smtp-relay.groovie.org:25
 - [ ] Windmill — connects to Postgres local
 - [ ] Linkwarden — Postgres local + config volume
 - [x] FreshRSS — Postgres local + config volume (port 8082)
@@ -1102,7 +1105,10 @@ rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
   - Added `base_extra_firewall_ports` to base role for per-host UFW rules
 - [ ] DukeTogo — config volume
 - [ ] Paste — config volume
-- [ ] SMTP Relay — stateless
+- [x] SMTP Relay — stateless (Maddy on port 25)
+  - Secrets from 1Password `smtp-relay` item (hostname, server, username, password)
+  - Used by Authentik and Vaultwarden via smtp-relay.groovie.org
+  - Added opnSense DNS override for smtp-relay.groovie.org
 - [ ] Beszel agent
 - [ ] Dozzle
 

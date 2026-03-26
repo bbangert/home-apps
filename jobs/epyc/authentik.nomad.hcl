@@ -55,6 +55,11 @@ EOF
         AUTHENTIK_POSTGRESQL__USER = "authentik"
         AUTHENTIK_REDIS__HOST      = "127.0.0.1"
         AUTHENTIK_REDIS__DB        = "1"
+        AUTHENTIK_EMAIL__HOST      = "smtp-relay.groovie.org"
+        AUTHENTIK_EMAIL__PORT      = "25"
+        AUTHENTIK_EMAIL__USE_TLS   = "false"
+        AUTHENTIK_EMAIL__USE_SSL   = "false"
+        AUTHENTIK_EMAIL__FROM      = "Authentik <homestar@groovie.org>"
       }
 
       resources {
@@ -90,6 +95,11 @@ EOF
         AUTHENTIK_POSTGRESQL__USER = "authentik"
         AUTHENTIK_REDIS__HOST      = "127.0.0.1"
         AUTHENTIK_REDIS__DB        = "1"
+        AUTHENTIK_EMAIL__HOST      = "smtp-relay.groovie.org"
+        AUTHENTIK_EMAIL__PORT      = "25"
+        AUTHENTIK_EMAIL__USE_TLS   = "false"
+        AUTHENTIK_EMAIL__USE_SSL   = "false"
+        AUTHENTIK_EMAIL__FROM      = "Authentik <homestar@groovie.org>"
       }
 
       resources {
