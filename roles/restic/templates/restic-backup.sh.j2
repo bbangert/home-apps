@@ -4,6 +4,7 @@ set -euo pipefail
 export RESTIC_PASSWORD_FILE=/etc/restic/password
 source /etc/restic/s3.env
 
+{% if restic_enable_local_repo | bool %}
 # Backup to local repo
 restic -r {{ restic_local_repo }} backup \
 {% for path in restic_backup_paths %}
@@ -14,6 +15,7 @@ restic -r {{ restic_local_repo }} backup \
 {% endfor %}
   --tag scheduled
 
+{% endif %}
 # Backup to S3 repo
 restic -r {{ restic_s3_repo }} backup \
 {% for path in restic_backup_paths %}

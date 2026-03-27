@@ -21,6 +21,7 @@ base_extra_firewall_ports:
   - { port: "8843", proto: tcp }
   - { port: "8880", proto: tcp }
   - { port: "25", proto: tcp }
+  - { port: "8428", proto: tcp }
 
 nomad_host_volumes:
   - name: immich-pg-data
@@ -71,6 +72,8 @@ caddy_routes:
     backend: localhost:6543
   - hostname: grafana.groovie.org
     backend: localhost:3001
+  - hostname: frigate.groovie.org
+    backend: 192.168.2.40:5000
 
 telegraf_collect_docker: true
 telegraf_collect_postgres: true

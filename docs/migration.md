@@ -1185,26 +1185,26 @@ job "immich" {
 
 ## Phase 2: beelink1 — Frigate
 
-**Status:** 🟡 In progress
+**Status:** ✅ Complete
 
-Simplest node — just Frigate with hardware passthrough. After re-imaging: run
-`base`, `docker`, `nomad`, `onepassword`, and `telegraf` roles, then restore
-config and deploy the Frigate job.
+Simplest node — just Frigate with hardware passthrough. Re-imaged with Ubuntu
+24.04, bootstrapped, all roles applied, Frigate deployed and running.
 
 ### Ansible roles for beelink1
 
-- [ ] `base`
-- [ ] `docker`
-- [ ] `nomad` (client only — connects to epyc:4647)
-- [ ] `onepassword`
-- [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
+- [x] `base`
+- [x] `docker`
+- [x] `nomad` (client only — connects to epyc:4647)
+- [x] `onepassword`
+- [x] `telegraf` (metrics collection → VictoriaMetrics on epyc)
+- [x] `restic` (S3-only backup of `/srv/frigate/config`)
 
-### Apps to deploy
+### Apps deployed
 
-- [ ] Install Intel GPU drivers + Coral TPU drivers via Ansible
-- [ ] Restore Frigate config from backup
-- [ ] Deploy Nomad job with device passthrough (USB Coral + `/dev/dri` for GPU)
-- [ ] Verify camera feeds and detection
+- [x] Frigate 0.17.1 — Docker with privileged mode, USB Coral TPU + Intel GPU (`/dev/dri`) passthrough
+- [x] Secrets via Nomad Variables from 1Password
+- [x] Caddy route on epyc (`frigate.groovie.org` → `192.168.2.40:5000`)
+- [x] Firewall ports open (5000/tcp, 8554/tcp, 8555/tcp+udp)
 
 ---
 

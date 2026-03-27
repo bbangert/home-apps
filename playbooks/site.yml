@@ -57,7 +57,7 @@
     - role: cloudflare-dns
 
 - name: Configure Restic backups
-  hosts: epyc
+  hosts: all
   gather_facts: true
   become: true
   tags: [restic]

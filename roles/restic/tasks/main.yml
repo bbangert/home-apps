@@ -12,6 +12,7 @@
     owner: root
     group: root
     mode: "0700"
+  when: restic_enable_local_repo | bool
 
 - name: Create restic config directory
   ansible.builtin.file:
@@ -43,6 +44,7 @@
   ansible.builtin.command:
     cmd: restic -r {{ restic_local_repo }} init --password-file /etc/restic/password
     creates: "{{ restic_local_repo }}/config"
+  when: restic_enable_local_repo | bool
 
 - name: Initialize S3 restic repo
   ansible.builtin.shell:

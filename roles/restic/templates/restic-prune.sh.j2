@@ -4,6 +4,7 @@ set -euo pipefail
 export RESTIC_PASSWORD_FILE=/etc/restic/password
 source /etc/restic/s3.env
 
+{% if restic_enable_local_repo | bool %}
 # Prune local repo
 restic -r {{ restic_local_repo }} forget \
   --keep-daily {{ restic_keep_daily }} \
@@ -11,6 +12,7 @@ restic -r {{ restic_local_repo }} forget \
   --keep-monthly {{ restic_keep_monthly }} \
   --prune
 
+{% endif %}
 # Prune S3 repo
 restic -r {{ restic_s3_repo }} forget \
   --keep-daily {{ restic_keep_daily }} \

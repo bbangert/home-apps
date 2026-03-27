@@ -4,6 +4,7 @@ restic_backup_paths:
 restic_exclude_patterns:
   - /srv/immich/ml-cache
 restic_local_repo: /mnt/backups/restic
+restic_enable_local_repo: true
 restic_s3_repo: "s3:s3.amazonaws.com/homestar-cloudnative-pg/restic"
 restic_keep_daily: 7
 restic_keep_weekly: 4

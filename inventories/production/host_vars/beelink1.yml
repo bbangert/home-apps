@@ -1,3 +1,31 @@
 ---
 homestar_node_role: nomad_client
+homestar_manage_static_network: true
+homestar_primary_interface: enp2s0
+homestar_ipv4_addresses:
+  - 192.168.2.40/24
 homestar_service_ip: 192.168.2.40
+bootstrap_final_ssh_host: 192.168.2.40
+
+base_extra_firewall_ports:
+  - { port: "5000", proto: tcp }
+  - { port: "8554", proto: tcp }
+  - { port: "8555", proto: tcp }
+  - { port: "8555", proto: udp }
+
+telegraf_victoriametrics_url: "http://192.168.2.35:8428"
+telegraf_collect_docker: true
+
+restic_enable_local_repo: false
+restic_backup_paths:
+  - /srv/frigate/config
+restic_exclude_patterns: []
+restic_password: "{{ lookup('pipe', 'op read op://HomeCluster/restic/password') }}"
+restic_s3_key: "{{ lookup('pipe', 'op read op://HomeCluster/aws/ACCESS_KEY_ID') }}"
+restic_s3_secret: "{{ lookup('pipe', 'op read op://HomeCluster/aws/SECRET_ACCESS_KEY') }}"
+
+nomad_host_volumes:
+  - name: frigate-config
+    path: /srv/frigate/config
+  - name: frigate-media
+    path: /srv/frigate/media

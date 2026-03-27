@@ -1,6 +1,6 @@
 ---
 - name: Ensure Python is available on the freshly installed host
-  hosts: epyc
+  hosts: "{{ target_host }}"
   gather_facts: false
   become: true
   tasks:
@@ -8,8 +8,8 @@
       ansible.builtin.raw: test -x /usr/bin/python3 || (apt-get update && apt-get install -y python3 python3-apt sudo)
       changed_when: false
 
-- name: Converge epyc networking from DHCP to the planned static addresses
-  hosts: epyc
+- name: Converge networking from DHCP to the planned static addresses
+  hosts: "{{ target_host }}"
   gather_facts: true
   become: true
   roles:
@@ -21,14 +21,14 @@
     - name: Flush networking handlers before reconnecting
       ansible.builtin.meta: flush_handlers
 
-- name: Wait for epyc on the final static address
+- name: Wait for host on the final static address
   hosts: localhost
   gather_facts: false
   become: false
   vars:
     ansible_connection: local
     ansible_become: false
-    bootstrap_target: epyc
+    bootstrap_target: "{{ target_host }}"
   tasks:
     - name: Wait for SSH to return on the final address
       ansible.builtin.wait_for:
@@ -38,7 +38,7 @@
         timeout: 180
 
 - name: Apply the base operating-system baseline using the canonical address
-  hosts: epyc
+  hosts: "{{ target_host }}"
   gather_facts: true
   become: true
   vars:
