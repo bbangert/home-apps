@@ -112,23 +112,23 @@ Apps are pinned to nodes based on resource needs and data locality.
 - Caddy reverse proxy + Cloudflared tunnel
 
 **h4uno** — Media serving + libraries (2TB NVMe, NFS server for media, Intel N97 Quick Sync for Plex transcoding)
-- `/srv/data/` — single root exported via NFS, contains:
-  - `downloads/` (200Gi) — SABnzbd writes here (via NFS from h4dos)
-  - `video/` (450Gi) — Sonarr/Radarr hard-link from downloads (via NFS from h4dos)
-  - `music/` (550Gi) — Lidarr hard-links from downloads (via NFS from h4dos)
-  - `books/` — local only, not exported
+- `/srv/data/` — media root exported via NFS to h4dos, contains:
+  - `video/` (450Gi) — Sonarr/Radarr move completed downloads here (from h4dos via NFS)
+  - `music/` (550Gi) — Lidarr moves completed downloads here (from h4dos via NFS)
+  - `books/` — local only
 - Plex — config (local) + reads video/music directly from `/srv/data/` (NVMe speed)
 - Komga + Komf — comic/book library
 - Calibre-Web — config + `/srv/data/books/`
 - OCIS — ownCloud files
 - Music Assistant — config + reads `/srv/data/music/`
 
-**h4dos** — Download automation (mounts h4uno:/srv/data via NFS)
-- `/mnt/data/` — NFS mount of h4uno:/srv/data (downloads + media as one filesystem, hard-links work)
-- SABnzbd — config (local) + writes to `/mnt/data/downloads/`
-- Sonarr — config (local); hard-links from `/mnt/data/downloads/` → `/mnt/data/video/`; Postgres on epyc
-- Radarr — config (local); hard-links from `/mnt/data/downloads/` → `/mnt/data/video/`; Postgres on epyc
-- Lidarr — config (local); hard-links from `/mnt/data/downloads/` → `/mnt/data/music/`; Postgres on epyc
+**h4dos** — Download automation (local downloads, NFS for final media)
+- `/srv/downloads/` — local, SABnzbd downloads + par2 processing here (I/O intensive, stays local)
+- `/mnt/media/` — NFS mount of h4uno:/srv/data (media directories only, for *arr imports)
+- SABnzbd — config (local) + writes to `/srv/downloads/`
+- Sonarr — config (local); moves from `/srv/downloads/` → `/mnt/media/video/`; Postgres on epyc
+- Radarr — config (local); moves from `/srv/downloads/` → `/mnt/media/video/`; Postgres on epyc
+- Lidarr — config (local); moves from `/srv/downloads/` → `/mnt/media/music/`; Postgres on epyc
 - Prowlarr — Postgres on epyc
 
 **beelink1** — NVR (hardware-specific)
@@ -1217,8 +1217,8 @@ After re-imaging: run `base`, `docker`, `nomad`, `onepassword`,
 
 ### NFS server setup
 
-h4uno exports `/srv/data` to h4dos. This single export contains downloads, video,
-music, and books — so hard-links work from downloads into media directories.
+h4uno exports `/srv/data` to h4dos for media library access. Downloads stay
+local on h4dos — only final media directories are shared via NFS.
 
 ```bash
 # /etc/exports on h4uno
@@ -1227,10 +1227,9 @@ music, and books — so hard-links work from downloads into media directories.
 
 Directory structure on h4uno:
 ```
-/srv/data/              ← NFS export root
-├── downloads/          ← SABnzbd writes here (from h4dos via NFS)
-├── video/              ← Sonarr/Radarr hard-link from downloads (from h4dos via NFS)
-├── music/              ← Lidarr hard-links from downloads (from h4dos via NFS)
+/srv/data/              ← NFS export root (media only)
+├── video/              ← Sonarr/Radarr move completed downloads here (from h4dos via NFS)
+├── music/              ← Lidarr moves completed downloads here (from h4dos via NFS)
 └── books/              ← Calibre-Web / Komga (local only)
 
 /srv/plex/config/       ← Plex config (local, not exported)
@@ -1253,10 +1252,9 @@ Directory structure on h4uno:
 ### Data restoration
 
 ```bash
-# Media and downloads into the shared data root
+# Media into the shared data root
 rsync -a /mnt/backup/plex/media-music/ /srv/data/music/
 rsync -a /mnt/backup/plex/media-video/ /srv/data/video/
-rsync -a /mnt/backup/sabnzbd/sabnzbd-downloads/ /srv/data/downloads/
 rsync -a /mnt/backup/calibre-web/media-books/ /srv/data/books/
 
 # App configs (local)
@@ -1287,19 +1285,25 @@ rsync -a /mnt/backup/music-assistant/music-assistant-config/ /srv/music-assistan
 After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, `nfs` (client),
 `telegraf`, and `backup` roles, then restore configs and deploy jobs.
 
-### NFS client setup
+### Storage layout
 
-h4dos mounts h4uno's `/srv/data` export. All media and downloads appear as one
-filesystem, so hard-links work when *arr apps move completed downloads into the
-media library (instant, zero copy).
+Downloads stay local on h4dos for I/O-intensive par2/extraction. *arr apps
+move completed files to h4uno via NFS for final media storage.
+
+```
+/srv/downloads/         ← SABnzbd downloads + processing (local, I/O intensive)
+/mnt/media/             ← NFS mount of h4uno:/srv/data (media directories)
+├── video/              ← Sonarr/Radarr import destination
+└── music/              ← Lidarr import destination
+```
 
 ```bash
 # /etc/fstab on h4dos
-192.168.2.36:/srv/data  /mnt/data  nfs  defaults,_netdev  0 0
+192.168.2.36:/srv/data  /mnt/media  nfs  defaults,_netdev  0 0
 ```
 
-If h4uno goes down, NFS mounts go stale and *arr apps can't write. This is fine —
-Plex is also on h4uno, so there's nothing to serve media to anyway.
+If h4uno goes down, NFS mounts go stale and *arr apps can't import. SABnzbd
+can still download and process — imports will complete once h4uno is back.
 
 ### Ansible roles for h4dos
 
@@ -1307,27 +1311,30 @@ Plex is also on h4uno, so there's nothing to serve media to anyway.
 - [ ] `docker`
 - [ ] `nomad` (client only — connects to epyc:4647)
 - [ ] `onepassword`
-- [ ] `nfs` (client — mounts h4uno:/srv/data at /mnt/data)
+- [ ] `nfs` (client — mounts h4uno:/srv/data at /mnt/media)
 - [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
 - [ ] `backup` (Restic for app configs)
 
 ### Data restoration
 
 ```bash
-# App configs only — media/downloads already live on h4uno
+# App configs
 rsync -a /mnt/backup/sonarr/sonarr-config/ /srv/sonarr/config/
 rsync -a /mnt/backup/radarr/radarr-config/ /srv/radarr/config/
 rsync -a /mnt/backup/lidarr/lidarr-config/ /srv/lidarr/config/
 rsync -a /mnt/backup/sabnzbd/sabnzbd-config/ /srv/sabnzbd/config/
+
+# Downloads (if any in-progress)
+rsync -a /mnt/backup/sabnzbd/sabnzbd-downloads/ /srv/downloads/
 ```
 
 ### Apps to deploy
 
 - [ ] NFS client mount (via Ansible `nfs` role)
-- [ ] SABnzbd — config (local) + writes to `/mnt/data/downloads/`
-- [ ] Sonarr — config (local); `/mnt/data/downloads/` + `/mnt/data/video/`; Postgres on epyc
-- [ ] Radarr — config (local); `/mnt/data/downloads/` + `/mnt/data/video/`; Postgres on epyc
-- [ ] Lidarr — config (local); `/mnt/data/downloads/` + `/mnt/data/music/`; Postgres on epyc
+- [ ] SABnzbd — config (local) + writes to `/srv/downloads/`
+- [ ] Sonarr — config (local); `/srv/downloads/` + `/mnt/media/video/`; Postgres on epyc
+- [ ] Radarr — config (local); `/srv/downloads/` + `/mnt/media/video/`; Postgres on epyc
+- [ ] Lidarr — config (local); `/srv/downloads/` + `/mnt/media/music/`; Postgres on epyc
 - [ ] Prowlarr — Postgres on epyc
 
 ---
