@@ -1,0 +1,32 @@
+#!/bin/bash
+# Fetch Frigate stats and output InfluxDB line protocol
+set -euo pipefail
+
+STATS=$(curl -sf "{{ telegraf_frigate_url }}/api/stats" 2>/dev/null) || exit 0
+
+# Per-camera metrics
+for cam in $(echo "$STATS" | jq -r '.cameras | keys[]'); do
+  camera_fps=$(echo "$STATS" | jq -r ".cameras[\"$cam\"].camera_fps")
+  process_fps=$(echo "$STATS" | jq -r ".cameras[\"$cam\"].process_fps")
+  skipped_fps=$(echo "$STATS" | jq -r ".cameras[\"$cam\"].skipped_fps")
+  detection_fps=$(echo "$STATS" | jq -r ".cameras[\"$cam\"].detection_fps")
+  echo "frigate_camera,camera=$cam camera_fps=${camera_fps},process_fps=${process_fps},skipped_fps=${skipped_fps},detection_fps=${detection_fps}"
+done
+
+# Per-detector metrics
+for det in $(echo "$STATS" | jq -r '.detectors | keys[]'); do
+  inference_speed=$(echo "$STATS" | jq -r ".detectors[\"$det\"].inference_speed")
+  echo "frigate_detector,detector=$det inference_speed=${inference_speed}"
+done
+
+# GPU usage
+for gpu in $(echo "$STATS" | jq -r '.gpu_usages | keys[]'); do
+  gpu_pct=$(echo "$STATS" | jq -r ".gpu_usages[\"$gpu\"].gpu" | tr -d '%')
+  echo "frigate_gpu,gpu=$gpu gpu_usage=${gpu_pct}"
+done
+
+# Totals
+total_camera_fps=$(echo "$STATS" | jq -r '.camera_fps')
+total_detection_fps=$(echo "$STATS" | jq -r '.detection_fps')
+uptime=$(echo "$STATS" | jq -r '.service.uptime')
+echo "frigate_service total_camera_fps=${total_camera_fps},total_detection_fps=${total_detection_fps},uptime=${uptime}i"

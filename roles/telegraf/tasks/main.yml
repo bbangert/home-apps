@@ -53,6 +53,22 @@
   changed_when: "'GRANT ROLE' in _telegraf_pg_grant.stdout"
   when: telegraf_collect_postgres | bool
 
+- name: Install jq for Frigate stats script
+  ansible.builtin.apt:
+    name: jq
+    state: present
+  when: telegraf_collect_frigate | bool
+
+- name: Deploy Frigate stats script
+  ansible.builtin.template:
+    src: frigate-stats.sh.j2
+    dest: /usr/local/bin/frigate-stats.sh
+    owner: root
+    group: root
+    mode: "0755"
+  notify: restart telegraf
+  when: telegraf_collect_frigate | bool
+
 - name: Deploy telegraf configuration
   ansible.builtin.template:
     src: telegraf.conf.j2

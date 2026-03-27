@@ -55,3 +55,11 @@
   url = "{{ telegraf_nomad_url }}"
 
 {% endif %}
+{% if telegraf_collect_frigate | bool %}
+[[inputs.exec]]
+  commands = ["/usr/local/bin/frigate-stats.sh"]
+  timeout = "5s"
+  data_format = "influx"
+  name_suffix = ""
+
+{% endif %}

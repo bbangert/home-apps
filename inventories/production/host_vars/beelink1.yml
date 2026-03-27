@@ -15,6 +15,7 @@ base_extra_firewall_ports:
 
 telegraf_victoriametrics_url: "http://192.168.2.35:8428"
 telegraf_collect_docker: true
+telegraf_collect_frigate: true
 
 restic_enable_local_repo: false
 restic_backup_paths:
