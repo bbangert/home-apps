@@ -24,8 +24,8 @@ goes down, its apps are down until the node comes back — that's fine for a hom
 | Name | Hardware | CPU | Disk | RAM | Notes |
 |------|----------|-----|------|-----|-------|
 | epyc | Supermicro 5019D-FTN4 | AMD EPYC 3251 8C/16T @ 2.5-3.1GHz | 4TB NVMe (new) + 2TB SATA SSD | 128GB | No iGPU. Currently runs talos1+talos2 VMs under Proxmox. Will be wiped to bare metal. NVMe: all app data + Postgres. SATA: local backups (`/mnt/backups`). |
-| h4uno | ODroid H4 | Intel N97 4C/4T @ 2.0-3.6GHz | 2TB NVMe | 32GB | Quick Sync (HW transcode for Plex) |
-| h4dos | ODroid H4 | Intel N97 4C/4T @ 2.0-3.6GHz | 2TB NVMe | 32GB | Quick Sync |
+| h4uno | ODroid H4 | Intel N97 4C/4T @ 2.0-3.6GHz | 2TB NVMe | 32GB | Quick Sync |
+| h4dos | ODroid H4 | Intel N97 4C/4T @ 2.0-3.6GHz | 2TB NVMe | 32GB | Quick Sync (HW transcode for Plex) |
 | beelink1 | Beelink Mini S | Intel N5095 4C/4T @ 2.0-2.9GHz | 2TB SATA SSD | 8GB | Coral TPU + Intel GPU for Frigate |
 
 ### Databases
@@ -60,16 +60,17 @@ goes down, its apps are down until the node comes back — that's fine for a hom
 ├──────────────┤      ├──────────────────┤      ├───────────────┤
 │ Nomad server │      │ Nomad client     │      │ Nomad client  │
 ├──────────────┤      ├──────────────────┤      ├───────────────┤
-│ Postgres 17  │      │ Plex             │      │ Sonarr        │
-│ Immich+PG+ML │      │ Komga + Komf     │      │ Radarr        │
-│ Authentik    │      │ Calibre-Web      │      │ Lidarr        │
-│ Valkey       │      │ OCIS             │      │ SABnzbd       │
-│ Linkwarden   │      │ Music Assistant  │      │ Prowlarr      │
-│ FreshRSS     │      │                  │      │               │
+│ Postgres 17  │      │ Komga + Komf     │      │ Plex          │
+│ Immich+PG+ML │      │ Calibre-Web      │      │ Sonarr        │
+│ Authentik    │      │ Music Assistant  │      │ Radarr        │
+│ Valkey       │      │                  │      │ Lidarr        │
+│ Linkwarden   │      │                  │      │ SABnzbd       │
+│ FreshRSS     │      │                  │      │ Prowlarr      │
 │ Atuin        │      │                  │      │               │
 │ TheLounge    │      │                  │      │               │
 │ Unifi        │      │                  │      │               │
 │ Vaultwarden  │      │                  │      │               │
+│ OCIS         │      │                  │      │               │
 │ DukeTogo     │      │                  │      │               │
 │ Paste        │      │                  │      │               │
 │ SMTP Relay   │      │                  │      │               │
@@ -106,28 +107,28 @@ Apps are pinned to nodes based on resource needs and data locality.
 - Vaultwarden — password vault (Postgres-backed)
 - Linkwarden, FreshRSS, Atuin — Postgres-backed, lightweight
 - TheLounge, Unifi Controller — small config volumes
+- OCIS — ownCloud files
 - DukeTogo, Paste, SMTP Relay — minimal/stateless
 - VictoriaMetrics — time-series storage (Nomad job)
 - Grafana — dashboards (Nomad job)
 - Caddy reverse proxy + Cloudflared tunnel
 
-**h4uno** — Media serving + libraries (2TB NVMe, NFS server for media, Intel N97 Quick Sync for Plex transcoding)
-- `/srv/data/` — media root exported via NFS to h4dos, contains:
-  - `video/` (450Gi) — Sonarr/Radarr move completed downloads here (from h4dos via NFS)
+**h4uno** — Music, books + libraries (2TB NVMe, NFS server for music)
+- `/srv/data/` — exported via NFS to h4dos, contains:
   - `music/` (550Gi) — Lidarr moves completed downloads here (from h4dos via NFS)
   - `books/` — local only
-- Plex — config (local) + reads video/music directly from `/srv/data/` (NVMe speed)
 - Komga + Komf — comic/book library
 - Calibre-Web — config + `/srv/data/books/`
-- OCIS — ownCloud files
 - Music Assistant — config + reads `/srv/data/music/`
 
-**h4dos** — Download automation (local downloads, NFS for final media)
-- `/srv/downloads/` — local, SABnzbd downloads + par2 processing here (I/O intensive, stays local)
-- `/mnt/media/` — NFS mount of h4uno:/srv/data (media directories only, for *arr imports)
+**h4dos** — Downloads, video + automation (2TB NVMe, Intel N97 Quick Sync for Plex)
+- `/srv/downloads/` — local, SABnzbd downloads + par2 processing (I/O intensive)
+- `/srv/data/video/` — local, Sonarr/Radarr import directly (no NFS needed)
+- `/mnt/media/` — NFS mount of h4uno:/srv/data (for Lidarr music imports)
+- Plex — config (local) + reads video from `/srv/data/video/` (local NVMe speed)
 - SABnzbd — config (local) + writes to `/srv/downloads/`
-- Sonarr — config (local); moves from `/srv/downloads/` → `/mnt/media/video/`; Postgres on epyc
-- Radarr — config (local); moves from `/srv/downloads/` → `/mnt/media/video/`; Postgres on epyc
+- Sonarr — config (local); moves from `/srv/downloads/` → `/srv/data/video/`; Postgres on epyc
+- Radarr — config (local); moves from `/srv/downloads/` → `/srv/data/video/`; Postgres on epyc
 - Lidarr — config (local); moves from `/srv/downloads/` → `/mnt/media/music/`; Postgres on epyc
 - Prowlarr — Postgres on epyc
 
@@ -156,8 +157,8 @@ Minimal setup — Nomad as a container runner, not an orchestrator:
 | Node | Primary IP | Secondary IP | Notes |
 |------|-----------|--------------|-------|
 | epyc | 192.168.2.35 | 192.168.2.202 | Primary: all services + Caddy. Secondary: Unifi (avoids re-adopting devices) |
-| h4uno | 192.168.2.36 | — | Plex (advertise URL), Music Assistant (mDNS), NFS server |
-| h4dos | 192.168.2.39 | — | All *arr apps, no special networking |
+| h4uno | 192.168.2.36 | — | Music Assistant (mDNS), NFS server |
+| h4dos | 192.168.2.39 | — | Plex (advertise URL), downloads + video, NFS client |
 | beelink1 | 192.168.2.40 | — | Frigate only |
 
 **Apps requiring host networking** (can't use Docker bridge):
@@ -166,12 +167,12 @@ Minimal setup — Nomad as a container runner, not an orchestrator:
 |-----|------|-----|-------|
 | Unifi Controller | epyc (on .202) | Device adoption requires L2 discovery, STUN, and inform on known IP | 8080, 8443, 3478/UDP, 5514/UDP, 6789, 10001/UDP |
 | Music Assistant | h4uno | mDNS/Chromecast discovery requires being on the LAN broadcast domain | 8095 |
-| Plex | h4uno | Direct play needs `PLEX_ADVERTISE_URL` pointing to a reachable IP:port | 32400 (can use bridge with mapped port) |
+| Plex | h4dos | Direct play needs `PLEX_ADVERTISE_URL` pointing to a reachable IP:port | 32400 (can use bridge with mapped port) |
 | Frigate | beelink1 | RTSP streams need stable IP:port for cameras to connect to | 5000, 8554, 8555 |
 
 All other apps use Docker bridge networking with Caddy proxying by hostname.
 
-**Plex advertise URL:** `https://192.168.2.36:32400,https://plex.groovie.org:443`
+**Plex advertise URL:** `https://192.168.2.39:32400,https://plex.groovie.org:443`
 
 **Unifi secondary IP on epyc** (netplan config):
 ```yaml
@@ -350,7 +351,7 @@ files.groovie.org {
   reverse_proxy localhost:9200
 }
 plex.groovie.org {
-  reverse_proxy h4uno:32400
+  reverse_proxy h4dos:32400
 }
 link.groovie.org {
   reverse_proxy localhost:3000
@@ -1217,8 +1218,7 @@ After re-imaging: run `base`, `docker`, `nomad`, `onepassword`,
 
 ### NFS server setup
 
-h4uno exports `/srv/data` to h4dos for media library access. Downloads stay
-local on h4dos — only final media directories are shared via NFS.
+h4uno exports `/srv/data` to h4dos for music library access (Lidarr imports).
 
 ```bash
 # /etc/exports on h4uno
@@ -1227,16 +1227,14 @@ local on h4dos — only final media directories are shared via NFS.
 
 Directory structure on h4uno:
 ```
-/srv/data/              ← NFS export root (media only)
-├── video/              ← Sonarr/Radarr move completed downloads here (from h4dos via NFS)
+/srv/data/              ← NFS export root
 ├── music/              ← Lidarr moves completed downloads here (from h4dos via NFS)
 └── books/              ← Calibre-Web / Komga (local only)
 
-/srv/plex/config/       ← Plex config (local, not exported)
-/srv/ocis/data/         ← OCIS data (local, not exported)
 /srv/komga/config/      ← Komga config (local)
 /srv/komga/assets/      ← Komga assets (local)
-...etc per app
+/srv/calibre-web/config/ ← Calibre-Web config (local)
+/srv/music-assistant/config/ ← Music Assistant config (local)
 ```
 
 ### Ansible roles for h4uno
@@ -1247,19 +1245,16 @@ Directory structure on h4uno:
 - [ ] `onepassword`
 - [ ] `nfs` (server — exports `/srv/data`)
 - [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
-- [ ] `backup` (Restic for app configs)
+- [ ] `restic` (backup app configs)
 
 ### Data restoration
 
 ```bash
-# Media into the shared data root
+# Media
 rsync -a /mnt/backup/plex/media-music/ /srv/data/music/
-rsync -a /mnt/backup/plex/media-video/ /srv/data/video/
 rsync -a /mnt/backup/calibre-web/media-books/ /srv/data/books/
 
-# App configs (local)
-rsync -a /mnt/backup/plex/plex-config/ /srv/plex/config/
-rsync -a /mnt/backup/ocis/ocis-data/ /srv/ocis/data/
+# App configs
 rsync -a /mnt/backup/komga/komga-config/ /srv/komga/config/
 rsync -a /mnt/backup/komga/komga-assets/ /srv/komga/assets/
 rsync -a /mnt/backup/calibre-web/calibre-web-config/ /srv/calibre-web/config/
@@ -1269,31 +1264,30 @@ rsync -a /mnt/backup/music-assistant/music-assistant-config/ /srv/music-assistan
 ### Apps to deploy
 
 - [ ] NFS server (via Ansible `nfs` role)
-- [ ] Plex — config (local), reads `/srv/data/video/` + `/srv/data/music/` (local NVMe)
 - [ ] Komga — config + assets (local)
 - [ ] Komf — config (local)
 - [ ] Calibre-Web — config (local) + `/srv/data/books/`
-- [ ] OCIS — data (local)
 - [ ] Music Assistant — config (local) + `/srv/data/music/`
 
 ---
 
-## Phase 4: h4dos — Download Automation
+## Phase 4: h4dos — Downloads, Video + Automation
 
 **Status:** 🔴 Not started
 
 After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, `nfs` (client),
-`telegraf`, and `backup` roles, then restore configs and deploy jobs.
+`telegraf`, and `restic` roles, then restore data and deploy jobs.
 
 ### Storage layout
 
-Downloads stay local on h4dos for I/O-intensive par2/extraction. *arr apps
-move completed files to h4uno via NFS for final media storage.
+Downloads and video stay local on h4dos. Plex reads video locally for NVMe
+speed. Lidarr imports music to h4uno via NFS.
 
 ```
 /srv/downloads/         ← SABnzbd downloads + processing (local, I/O intensive)
-/mnt/media/             ← NFS mount of h4uno:/srv/data (media directories)
-├── video/              ← Sonarr/Radarr import destination
+/srv/data/video/        ← Sonarr/Radarr import destination (local)
+/srv/plex/config/       ← Plex config (local)
+/mnt/media/             ← NFS mount of h4uno:/srv/data (for Lidarr music imports)
 └── music/              ← Lidarr import destination
 ```
 
@@ -1302,8 +1296,8 @@ move completed files to h4uno via NFS for final media storage.
 192.168.2.36:/srv/data  /mnt/media  nfs  defaults,_netdev  0 0
 ```
 
-If h4uno goes down, NFS mounts go stale and *arr apps can't import. SABnzbd
-can still download and process — imports will complete once h4uno is back.
+If h4uno goes down, Lidarr can't import music. SABnzbd, Sonarr, Radarr, and
+Plex all work locally and are unaffected.
 
 ### Ansible roles for h4dos
 
@@ -1313,27 +1307,30 @@ can still download and process — imports will complete once h4uno is back.
 - [ ] `onepassword`
 - [ ] `nfs` (client — mounts h4uno:/srv/data at /mnt/media)
 - [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
-- [ ] `backup` (Restic for app configs)
+- [ ] `restic` (backup app configs)
 
 ### Data restoration
 
 ```bash
+# Video + downloads
+rsync -a /mnt/backup/plex/media-video/ /srv/data/video/
+rsync -a /mnt/backup/sabnzbd/sabnzbd-downloads/ /srv/downloads/
+
 # App configs
+rsync -a /mnt/backup/plex/plex-config/ /srv/plex/config/
 rsync -a /mnt/backup/sonarr/sonarr-config/ /srv/sonarr/config/
 rsync -a /mnt/backup/radarr/radarr-config/ /srv/radarr/config/
 rsync -a /mnt/backup/lidarr/lidarr-config/ /srv/lidarr/config/
 rsync -a /mnt/backup/sabnzbd/sabnzbd-config/ /srv/sabnzbd/config/
-
-# Downloads (if any in-progress)
-rsync -a /mnt/backup/sabnzbd/sabnzbd-downloads/ /srv/downloads/
 ```
 
 ### Apps to deploy
 
 - [ ] NFS client mount (via Ansible `nfs` role)
+- [ ] Plex — config (local) + reads `/srv/data/video/` (local NVMe)
 - [ ] SABnzbd — config (local) + writes to `/srv/downloads/`
-- [ ] Sonarr — config (local); `/srv/downloads/` + `/mnt/media/video/`; Postgres on epyc
-- [ ] Radarr — config (local); `/srv/downloads/` + `/mnt/media/video/`; Postgres on epyc
+- [ ] Sonarr — config (local); `/srv/downloads/` + `/srv/data/video/`; Postgres on epyc
+- [ ] Radarr — config (local); `/srv/downloads/` + `/srv/data/video/`; Postgres on epyc
 - [ ] Lidarr — config (local); `/srv/downloads/` + `/mnt/media/music/`; Postgres on epyc
 - [ ] Prowlarr — Postgres on epyc
 
