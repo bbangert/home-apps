@@ -9,10 +9,11 @@ bootstrap_final_ssh_host: 192.168.2.36
 
 base_extra_firewall_ports:
   - { port: "2049", proto: tcp }
-  - { port: "25600", proto: tcp }
+  - { port: "5353", proto: udp }
+  - { port: "8095", proto: tcp }
   - { port: "8083", proto: tcp }
   - { port: "8085", proto: tcp }
-  - { port: "8095", proto: tcp }
+  - { port: "25600", proto: tcp }
 
 nfs_role: server
 nfs_exports:
