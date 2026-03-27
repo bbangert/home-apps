@@ -23,6 +23,14 @@
   roles:
     - role: onepassword
 
+- name: Configure NFS server/client
+  hosts: all
+  gather_facts: true
+  become: true
+  tags: [nfs]
+  roles:
+    - role: nfs
+
 - name: Install and configure Nomad
   hosts: nomad_server:nomad_client
   gather_facts: true
@@ -38,14 +46,6 @@
   tags: [postgres]
   roles:
     - role: postgres
-
-- name: Configure NFS server/client
-  hosts: all
-  gather_facts: true
-  become: true
-  tags: [nfs]
-  roles:
-    - role: nfs
 
 - name: Install and configure Caddy
   hosts: epyc

@@ -1,3 +1,57 @@
 ---
 homestar_node_role: nomad_client
+homestar_manage_static_network: true
+homestar_primary_interface: enp2s0
+homestar_ipv4_addresses:
+  - 192.168.2.39/24
 homestar_service_ip: 192.168.2.39
+bootstrap_final_ssh_host: 192.168.2.39
+
+base_extra_firewall_ports:
+  - { port: "32400", proto: tcp }
+  - { port: "8080", proto: tcp }
+  - { port: "8989", proto: tcp }
+  - { port: "7878", proto: tcp }
+  - { port: "8686", proto: tcp }
+  - { port: "9696", proto: tcp }
+
+nfs_role: client
+nfs_mounts:
+  - src: 192.168.2.36:/srv/data
+    path: /mnt/media
+    fstype: nfs
+    opts: defaults,_netdev
+
+telegraf_victoriametrics_url: "http://192.168.2.35:8428"
+telegraf_collect_docker: true
+
+restic_enable_local_repo: false
+restic_backup_paths:
+  - /srv
+restic_exclude_patterns:
+  - /srv/downloads
+  - /srv/data/video
+restic_password: "{{ lookup('pipe', 'op read op://HomeCluster/restic/password') }}"
+restic_s3_key: "{{ lookup('pipe', 'op read op://HomeCluster/aws/ACCESS_KEY_ID') }}"
+restic_s3_secret: "{{ lookup('pipe', 'op read op://HomeCluster/aws/SECRET_ACCESS_KEY') }}"
+restic_enable_b2_repo: false
+
+nomad_host_volumes:
+  - name: plex-config
+    path: /srv/plex/config
+  - name: sabnzbd-config
+    path: /srv/sabnzbd/config
+  - name: sonarr-config
+    path: /srv/sonarr/config
+  - name: radarr-config
+    path: /srv/radarr/config
+  - name: lidarr-config
+    path: /srv/lidarr/config
+  - name: prowlarr-config
+    path: /srv/prowlarr/config
+  - name: data-video
+    path: /srv/data/video
+  - name: data-downloads
+    path: /srv/downloads
+  - name: data-music
+    path: /mnt/media/music
