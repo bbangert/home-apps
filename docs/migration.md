@@ -523,13 +523,10 @@ k8s volumes). Backup data is on local disk ready for restoration to host paths.
 
 ## Phase 1: epyc — Complete Setup
 
-**Status:** 🟡 In progress
+**Status:** 🟢 Complete
 
-Complete all epyc setup before re-imaging any other node. Phases 2–4 handle h4uno,
-h4dos, and beelink1 respectively. Scale down k8s workloads on those nodes as needed
-to free up resources, but don't wipe them until epyc is fully operational and
-validated. Caddy and DNS can be configured for all apps up front — routes to other
-nodes will return 502 until those nodes come up, which is fine.
+All epyc apps deployed, backups running (pgBackRest, Immich pg_dump, Restic),
+monitoring live (Telegraf → VictoriaMetrics → Grafana), tunnel and DNS working.
 
 ### Order of operations
 
@@ -1186,12 +1183,36 @@ job "immich" {
 
 ---
 
-## Phase 2: h4uno — Media Serving + Libraries
+## Phase 2: beelink1 — Frigate
+
+**Status:** 🟡 In progress
+
+Simplest node — just Frigate with hardware passthrough. After re-imaging: run
+`base`, `docker`, `nomad`, `onepassword`, and `telegraf` roles, then restore
+config and deploy the Frigate job.
+
+### Ansible roles for beelink1
+
+- [ ] `base`
+- [ ] `docker`
+- [ ] `nomad` (client only — connects to epyc:4647)
+- [ ] `onepassword`
+- [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
+
+### Apps to deploy
+
+- [ ] Install Intel GPU drivers + Coral TPU drivers via Ansible
+- [ ] Restore Frigate config from backup
+- [ ] Deploy Nomad job with device passthrough (USB Coral + `/dev/dri` for GPU)
+- [ ] Verify camera feeds and detection
+
+---
+
+## Phase 3: h4uno — Media Serving + Libraries
 
 **Status:** 🔴 Not started
 
-Re-image h4uno last — it's currently running most k8s workloads. Scale them down
-before wiping. After re-imaging: run `base`, `docker`, `nomad`, `onepassword`,
+After re-imaging: run `base`, `docker`, `nomad`, `onepassword`,
 `nfs` (server), `telegraf`, and `backup` roles, then restore data and deploy jobs.
 
 ### NFS server setup
@@ -1259,7 +1280,7 @@ rsync -a /mnt/backup/music-assistant/music-assistant-config/ /srv/music-assistan
 
 ---
 
-## Phase 3: h4dos — Download Automation
+## Phase 4: h4dos — Download Automation
 
 **Status:** 🔴 Not started
 
@@ -1308,30 +1329,6 @@ rsync -a /mnt/backup/sabnzbd/sabnzbd-config/ /srv/sabnzbd/config/
 - [ ] Radarr — config (local); `/mnt/data/downloads/` + `/mnt/data/video/`; Postgres on epyc
 - [ ] Lidarr — config (local); `/mnt/data/downloads/` + `/mnt/data/music/`; Postgres on epyc
 - [ ] Prowlarr — Postgres on epyc
-
----
-
-## Phase 4: beelink1 — Frigate
-
-**Status:** 🔴 Not started
-
-After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, and `telegraf`
-roles, then restore config and deploy the Frigate job.
-
-### Ansible roles for beelink1
-
-- [ ] `base`
-- [ ] `docker`
-- [ ] `nomad` (client only — connects to epyc:4647)
-- [ ] `onepassword`
-- [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
-
-### Apps to deploy
-
-- [ ] Install Intel GPU drivers + Coral TPU drivers via Ansible
-- [ ] Restore Frigate config from backup
-- [ ] Deploy Nomad job with device passthrough (USB Coral + `/dev/dri` for GPU)
-- [ ] Verify camera feeds and detection
 
 ---
 
