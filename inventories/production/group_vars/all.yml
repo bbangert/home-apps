@@ -64,6 +64,8 @@ public_apps:
   - zone: groovie.org
     name: photos
   - zone: groovie.org
+    name: files
+  - zone: groovie.org
     name: link
   - zone: ofcode.org
     name: paste

@@ -50,6 +50,8 @@ nomad_host_volumes:
     path: /srv/grafana/data
   - name: grafana-dashboards
     path: /srv/grafana/dashboards
+  - name: ocis-data
+    path: /srv/ocis/data
 
 caddy_routes:
   - hostname: auth.groovie.org
@@ -72,6 +74,8 @@ caddy_routes:
     backend: localhost:6543
   - hostname: grafana.groovie.org
     backend: localhost:3001
+  - hostname: files.groovie.org
+    backend: localhost:9200
   - hostname: frigate.groovie.org
     backend: 192.168.2.40:5000
 
