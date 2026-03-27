@@ -11,6 +11,7 @@ base_extra_firewall_ports:
   - { port: "2049", proto: tcp }
   - { port: "5353", proto: udp }
   - { port: "8095", proto: tcp }
+  - { port: "8097", proto: tcp }
   - { port: "8083", proto: tcp }
   - { port: "8085", proto: tcp }
   - { port: "25600", proto: tcp }
