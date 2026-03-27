@@ -2,9 +2,10 @@
 set -euo pipefail
 
 export RESTIC_PASSWORD_FILE=/etc/restic/password
-source /etc/restic/s3.env
 
 {% if restic_enable_local_repo | bool %}
+source /etc/restic/s3.env
+
 # Backup to local repo
 restic -r {{ restic_local_repo }} backup \
 {% for path in restic_backup_paths %}
@@ -16,6 +17,8 @@ restic -r {{ restic_local_repo }} backup \
   --tag scheduled
 
 {% endif %}
+source /etc/restic/s3.env
+
 # Backup to S3 repo
 restic -r {{ restic_s3_repo }} backup \
 {% for path in restic_backup_paths %}
@@ -26,4 +29,18 @@ restic -r {{ restic_s3_repo }} backup \
 {% endfor %}
   --tag scheduled
 
+{% if restic_enable_b2_repo | bool %}
+source /etc/restic/b2.env
+
+# Backup to B2 repo
+restic -r {{ restic_b2_repo }} backup \
+{% for path in restic_b2_backup_paths %}
+  {{ path }} \
+{% endfor %}
+{% for pattern in restic_b2_exclude_patterns %}
+  --exclude '{{ pattern }}' \
+{% endfor %}
+  --tag scheduled
+
+{% endif %}
 echo "Restic backup completed at $(date)"

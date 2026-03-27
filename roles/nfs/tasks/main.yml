@@ -1,0 +1,63 @@
+---
+# --- Server ---
+- name: Install NFS server
+  ansible.builtin.apt:
+    name: nfs-kernel-server
+    state: present
+    update_cache: true
+  when: nfs_role == "server"
+
+- name: Ensure export directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ nfs_exports }}"
+  when: nfs_role == "server"
+
+- name: Configure /etc/exports
+  ansible.builtin.template:
+    src: exports.j2
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload nfs exports
+  when: nfs_role == "server"
+
+- name: Ensure NFS server is started and enabled
+  ansible.builtin.service:
+    name: nfs-kernel-server
+    state: started
+    enabled: true
+  when: nfs_role == "server"
+
+# --- Client ---
+- name: Install NFS client
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+    update_cache: true
+  when: nfs_role == "client"
+
+- name: Ensure mount directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ nfs_mounts }}"
+  when: nfs_role == "client"
+
+- name: Mount NFS shares
+  ansible.posix.mount:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    fstype: nfs
+    opts: "{{ item.opts | default('defaults,_netdev') }}"
+    state: mounted
+  loop: "{{ nfs_mounts }}"
+  when: nfs_role == "client"

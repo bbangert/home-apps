@@ -76,6 +76,12 @@ caddy_routes:
     backend: localhost:3001
   - hostname: files.groovie.org
     backend: localhost:9200
+  - hostname: komga.groovie.org
+    backend: 192.168.2.36:25600
+  - hostname: calibre-web.groovie.org
+    backend: 192.168.2.36:8083
+  - hostname: music-assistant.groovie.org
+    backend: 192.168.2.36:8095
   - hostname: frigate.groovie.org
     backend: 192.168.2.40:5000
 

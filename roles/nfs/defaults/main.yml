@@ -1,0 +1,12 @@
+---
+nfs_role: server
+nfs_exports: []
+# nfs_exports:
+#   - path: /srv/data
+#     clients: "192.168.2.39(rw,sync,no_subtree_check,no_root_squash)"
+
+nfs_mounts: []
+# nfs_mounts:
+#   - src: 192.168.2.36:/srv/data
+#     path: /mnt/media
+#     opts: defaults,_netdev

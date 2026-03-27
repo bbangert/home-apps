@@ -50,9 +50,29 @@
   ansible.builtin.shell:
     cmd: >
       . /etc/restic/s3.env &&
-      restic -r {{ restic_s3_repo }} init --password-file /etc/restic/password &&
+      restic -r {{ restic_s3_repo }} init --password-file /etc/restic/password 2>&1 || true;
       touch /etc/restic/.s3-initialized
     creates: /etc/restic/.s3-initialized
+
+- name: Deploy B2 environment file
+  ansible.builtin.copy:
+    content: |
+      export B2_ACCOUNT_ID={{ restic_b2_key_id }}
+      export B2_ACCOUNT_KEY={{ restic_b2_app_key }}
+    dest: /etc/restic/b2.env
+    owner: root
+    group: root
+    mode: "0600"
+  when: restic_enable_b2_repo | bool
+
+- name: Initialize B2 restic repo
+  ansible.builtin.shell:
+    cmd: >
+      . /etc/restic/b2.env &&
+      restic -r {{ restic_b2_repo }} init --password-file /etc/restic/password 2>&1 || true;
+      touch /etc/restic/.b2-initialized
+    creates: /etc/restic/.b2-initialized
+  when: restic_enable_b2_repo | bool
 
 - name: Deploy restic backup script
   ansible.builtin.template:

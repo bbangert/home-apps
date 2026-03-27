@@ -39,6 +39,14 @@
   roles:
     - role: postgres
 
+- name: Configure NFS server/client
+  hosts: all
+  gather_facts: true
+  become: true
+  tags: [nfs]
+  roles:
+    - role: nfs
+
 - name: Install and configure Caddy
   hosts: epyc
   gather_facts: true

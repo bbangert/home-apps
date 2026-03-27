@@ -359,6 +359,236 @@
           "legendFormat": "{{datname}}"
         }
       ]
+    },
+    {
+      "type": "timeseries",
+      "title": "WAL Bytes/sec",
+      "description": "Rate of WAL bytes written",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 7,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never"
+          },
+          "unit": "Bps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(pg_stat_wal_wal_bytes{host=\"epyc\"}[5m])",
+          "legendFormat": "WAL bytes/s"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "WAL Records & Full Page Images/sec",
+      "description": "Rate of WAL records and full page image writes",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 8,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never"
+          },
+          "unit": "ops",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(pg_stat_wal_wal_records{host=\"epyc\"}[5m])",
+          "legendFormat": "WAL records/s"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(pg_stat_wal_wal_fpi{host=\"epyc\"}[5m])",
+          "legendFormat": "Full page images/s"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "WAL Write & Sync Time",
+      "description": "Time spent writing and syncing WAL data (ms/sec)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 9,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never"
+          },
+          "unit": "ms",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(pg_stat_wal_wal_write_time{host=\"epyc\"}[5m])",
+          "legendFormat": "Write time"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(pg_stat_wal_wal_sync_time{host=\"epyc\"}[5m])",
+          "legendFormat": "Sync time"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "WAL Archiver",
+      "description": "Archive status — count of archived/failed segments and time since last archive",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 10,
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 32 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "seconds_since_last_archive" },
+            "properties": [
+              { "id": "unit", "value": "s" },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "value": null, "color": "green" },
+                { "value": 600, "color": "yellow" },
+                { "value": 3600, "color": "red" }
+              ]}}
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "failed_count" },
+            "properties": [
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "value": null, "color": "green" },
+                { "value": 1, "color": "red" }
+              ]}}
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "pg_stat_archiver_archived_count{host=\"epyc\"}",
+          "legendFormat": "archived_count"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "pg_stat_archiver_failed_count{host=\"epyc\"}",
+          "legendFormat": "failed_count"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "pg_stat_archiver_seconds_since_last_archive{host=\"epyc\"}",
+          "legendFormat": "seconds_since_last_archive"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Replication Slots",
+      "description": "Total and active replication slots",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 11,
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 32 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "pg_replication_slots_replication_slots{host=\"epyc\"}",
+          "legendFormat": "total slots"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "pg_replication_slots_active_slots{host=\"epyc\"}",
+          "legendFormat": "active slots"
+        }
+      ]
     }
   ]
 }

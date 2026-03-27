@@ -49,6 +49,30 @@
 [[inputs.postgresql]]
   address = "{{ telegraf_postgres_address }}"
 
+[[inputs.postgresql_extensible]]
+  address = "{{ telegraf_postgres_address }}"
+
+  [[inputs.postgresql_extensible.query]]
+    sqlquery = "SELECT wal_records, wal_fpi, wal_bytes, wal_buffers_full, wal_write, wal_sync, wal_write_time, wal_sync_time FROM pg_stat_wal"
+    version = 140
+    withdbname = false
+    tagvalue = ""
+    measurement = "pg_stat_wal"
+
+  [[inputs.postgresql_extensible.query]]
+    sqlquery = "SELECT archived_count, failed_count, EXTRACT(EPOCH FROM (now() - last_archived_time))::int AS seconds_since_last_archive FROM pg_stat_archiver"
+    version = 140
+    withdbname = false
+    tagvalue = ""
+    measurement = "pg_stat_archiver"
+
+  [[inputs.postgresql_extensible.query]]
+    sqlquery = "SELECT count(*) AS replication_slots, coalesce(sum(active::int), 0) AS active_slots FROM pg_replication_slots"
+    version = 140
+    withdbname = false
+    tagvalue = ""
+    measurement = "pg_replication_slots"
+
 {% endif %}
 {% if telegraf_collect_nomad | bool %}
 [[inputs.nomad]]

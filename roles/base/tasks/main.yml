@@ -65,6 +65,21 @@
     enabled: true
   when: base_apply_baseline | bool
 
+- name: Expand LVM root volume to use all free space
+  ansible.builtin.command:
+    cmd: lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+  register: _lvextend
+  changed_when: "'successfully resized' in _lvextend.stdout"
+  failed_when: _lvextend.rc != 0 and 'matches existing size' not in _lvextend.stderr and 'No free space' not in _lvextend.stderr
+  when: base_apply_baseline | bool
+
+- name: Resize filesystem after LVM expansion
+  ansible.builtin.command:
+    cmd: resize2fs /dev/ubuntu-vg/ubuntu-lv
+  when:
+    - base_apply_baseline | bool
+    - _lvextend is changed
+
 - name: Allow passwordless sudo for the remote admin user
   ansible.builtin.copy:
     dest: "{{ base_passwordless_sudo_path }}"

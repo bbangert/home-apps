@@ -1,3 +1,55 @@
 ---
 homestar_node_role: nomad_client
+homestar_manage_static_network: true
+homestar_primary_interface: enp2s0
+homestar_ipv4_addresses:
+  - 192.168.2.36/24
 homestar_service_ip: 192.168.2.36
+bootstrap_final_ssh_host: 192.168.2.36
+
+base_extra_firewall_ports:
+  - { port: "2049", proto: tcp }
+  - { port: "25600", proto: tcp }
+  - { port: "8083", proto: tcp }
+  - { port: "8085", proto: tcp }
+  - { port: "8095", proto: tcp }
+
+nfs_role: server
+nfs_exports:
+  - path: /srv/data
+    clients: "192.168.2.39(rw,sync,no_subtree_check,no_root_squash)"
+
+telegraf_victoriametrics_url: "http://192.168.2.35:8428"
+telegraf_collect_docker: true
+
+restic_enable_local_repo: false
+restic_backup_paths:
+  - /srv
+restic_exclude_patterns:
+  - /srv/data/music
+restic_password: "{{ lookup('pipe', 'op read op://HomeCluster/restic/password') }}"
+restic_s3_key: "{{ lookup('pipe', 'op read op://HomeCluster/aws/ACCESS_KEY_ID') }}"
+restic_s3_secret: "{{ lookup('pipe', 'op read op://HomeCluster/aws/SECRET_ACCESS_KEY') }}"
+restic_enable_b2_repo: true
+restic_b2_repo: "b2:homestar-mediabackup"
+restic_b2_backup_paths:
+  - /srv/data/music
+restic_b2_exclude_patterns: []
+restic_b2_key_id: "{{ lookup('pipe', 'op read op://HomeCluster/backblaze/B2_ACCOUNT_ID') }}"
+restic_b2_app_key: "{{ lookup('pipe', 'op read op://HomeCluster/backblaze/B2_ACCOUNT_KEY') }}"
+
+nomad_host_volumes:
+  - name: komga-config
+    path: /srv/komga/config
+  - name: komga-assets
+    path: /srv/komga/assets
+  - name: komf-config
+    path: /srv/komf/config
+  - name: calibre-web-config
+    path: /srv/calibre-web/config
+  - name: music-assistant-config
+    path: /srv/music-assistant/config
+  - name: data-music
+    path: /srv/data/music
+  - name: data-books
+    path: /srv/data/books
