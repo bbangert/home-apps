@@ -1,6 +1,25 @@
 {
   acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
+
+# HTTP-only listener for cloudflared tunnel (localhost only, no TLS)
+:8780 {
+  bind 127.0.0.1
+{% for route in caddy_routes %}
+  @{{ route.hostname | replace('.', '_') }} host {{ route.hostname }}
+  handle @{{ route.hostname | replace('.', '_') }} {
+    reverse_proxy {{ route.backend }} {
+{% if route.backend.startswith('https://') %}
+      header_up Host {hostport}
+      transport http {
+        tls_insecure_skip_verify
+      }
+{% endif %}
+    }
+  }
+{% endfor %}
+}
+
 {% for route in caddy_routes %}
 
 {{ route.hostname }} {

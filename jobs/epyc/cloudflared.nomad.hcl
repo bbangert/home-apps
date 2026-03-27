@@ -33,7 +33,7 @@ job "cloudflared" {
 tunnel: e30c91ae-29eb-4b4b-9a9c-c41df2dc7b90
 credentials-file: /secrets/credentials.json
 ingress:
-  - service: https://localhost:443
+  - service: http://127.0.0.1:8780
 EOF
         destination = "local/config.yml"
       }

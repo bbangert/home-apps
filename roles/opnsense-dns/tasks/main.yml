@@ -5,6 +5,8 @@
     domain: "{{ item.zone }}"
     value: "{{ caddy_ip }}"
     description: "homestar-{{ item.name }}"
+    state: present
+    match_fields: ["hostname", "domain"]
     reload: false
   loop: "{{ all_apps }}"
   loop_control:
