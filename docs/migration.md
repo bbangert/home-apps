@@ -1276,7 +1276,7 @@ rsync -a /mnt/backup/music-assistant/music-assistant-config/ /srv/music-assistan
 
 ## Phase 4: h4dos — Downloads, Video + Automation
 
-**Status:** 🔴 Not started
+**Status:** ✅ Complete
 
 After re-imaging: run `base`, `docker`, `nomad`, `onepassword`, `nfs` (client),
 `telegraf`, and `restic` roles, then restore data and deploy jobs.
@@ -1304,13 +1304,13 @@ Plex all work locally and are unaffected.
 
 ### Ansible roles for h4dos
 
-- [ ] `base`
-- [ ] `docker`
-- [ ] `nomad` (client only — connects to epyc:4647)
-- [ ] `onepassword`
-- [ ] `nfs` (client — mounts h4uno:/srv/data at /mnt/media)
-- [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
-- [ ] `restic` (backup app configs)
+- [x] `base`
+- [x] `docker`
+- [x] `nomad` (client only — connects to epyc:4647)
+- [x] `onepassword`
+- [x] `nfs` (client — mounts h4uno:/srv/data at /mnt/media)
+- [x] `telegraf` (metrics collection → VictoriaMetrics on epyc)
+- [x] `restic` (backup app configs)
 
 ### Data restoration
 
@@ -1329,13 +1329,13 @@ rsync -a /mnt/backup/sabnzbd/sabnzbd-config/ /srv/sabnzbd/config/
 
 ### Apps to deploy
 
-- [ ] NFS client mount (via Ansible `nfs` role)
-- [ ] Plex — config (local) + reads `/srv/data/video/` (local NVMe)
-- [ ] SABnzbd — config (local) + writes to `/srv/downloads/`
-- [ ] Sonarr — config (local); `/srv/downloads/` + `/srv/data/video/`; Postgres on epyc
-- [ ] Radarr — config (local); `/srv/downloads/` + `/srv/data/video/`; Postgres on epyc
-- [ ] Lidarr — config (local); `/srv/downloads/` + `/mnt/media/music/`; Postgres on epyc
-- [ ] Prowlarr — Postgres on epyc
+- [x] NFS client mount (via Ansible `nfs` role)
+- [x] Plex — config (local) + reads `/srv/data/video/` (local NVMe)
+- [x] SABnzbd — config (local) + writes to `/srv/downloads/`
+- [x] Sonarr — config (local); `/srv/downloads/` + `/srv/data/video/`; Postgres on epyc
+- [x] Radarr — config (local); `/srv/downloads/` + `/srv/data/video/`; Postgres on epyc
+- [x] Lidarr — config (local); `/srv/downloads/` + `/mnt/media/music/`; Postgres on epyc
+- [x] Prowlarr — Postgres on epyc
 
 ---
 
