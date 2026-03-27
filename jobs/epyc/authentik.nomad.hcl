@@ -26,7 +26,7 @@ job "authentik" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/goauthentik/server:2025.12.4"
+        image        = "ghcr.io/goauthentik/server:2026.2.1"
         network_mode = "host"
         ports        = ["http"]
         args         = ["server"]
@@ -72,7 +72,7 @@ EOF
       driver = "docker"
 
       config {
-        image        = "ghcr.io/goauthentik/server:2025.12.4"
+        image        = "ghcr.io/goauthentik/server:2026.2.1"
         network_mode = "host"
         args         = ["worker"]
       }
@@ -100,6 +100,7 @@ EOF
         AUTHENTIK_EMAIL__USE_TLS   = "false"
         AUTHENTIK_EMAIL__USE_SSL   = "false"
         AUTHENTIK_EMAIL__FROM      = "Authentik <homestar@groovie.org>"
+        AUTHENTIK_SKIP_MIGRATIONS  = "true"
       }
 
       resources {
