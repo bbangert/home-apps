@@ -73,3 +73,7 @@ caddy_routes:
 telegraf_collect_docker: true
 telegraf_collect_postgres: true
 telegraf_collect_nomad: true
+
+restic_password: "{{ lookup('pipe', 'op read op://HomeCluster/restic/password') }}"
+restic_s3_key: "{{ lookup('pipe', 'op read op://HomeCluster/aws/ACCESS_KEY_ID') }}"
+restic_s3_secret: "{{ lookup('pipe', 'op read op://HomeCluster/aws/SECRET_ACCESS_KEY') }}"

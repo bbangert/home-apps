@@ -462,7 +462,7 @@ data on NVMe, backup on SATA, offsite copy on S3.
 |------|-----|-------------|--------------|
 | PostgreSQL 17 (shared) | pgBackRest (WAL archiving + daily base) | `/mnt/backups/pgbackrest/` | S3 (`s3://homestar-cloudnative-pg/pgbackrest/homestar-pg17`) ✅ |
 | Immich Postgres (Docker) | pg_dump on schedule (Nomad periodic job) + S3 sync | `/mnt/backups/immich-pg/` | S3 (`s3://homestar-cloudnative-pg/immich-pg-dumps/`) ✅ |
-| App config volumes | Restic | `/mnt/backups/restic/` | S3 |
+| App config volumes | Restic (systemd timer, daily 3am) | `/mnt/backups/restic/` | S3 (`s3://homestar-cloudnative-pg/restic`) |
 | Media (music/video/books) | Restic or rclone | — (too large for SATA) | S3 / second drive |
 
 The SATA drive also provides staging space for the PG16→PG17 Barman restore process
@@ -489,10 +489,8 @@ Barman server names:
 S3 credentials stored in 1Password under `aws` and `cloudnative-pg`.
 
 **Action items (verify before wiping epyc):**
-- [ ] Verify Barman backups exist and are recent:
-  - `barman-cloud-backup-list --cloud-provider aws-s3 s3://homestar-cloudnative-pg/ postgres16-v5`
-  - `barman-cloud-backup-list --cloud-provider aws-s3 s3://homestar-cloudnative-pg/ immich-postgres16-v1`
-- [ ] Note S3 credentials from 1Password
+- [x] Verify Barman backups exist and are recent
+- [x] Note S3 credentials from 1Password
 
 Actual restore happens in Phase 2 after epyc is provisioned with Ubuntu + PostgreSQL.
 
@@ -566,7 +564,7 @@ Roles that exist in this repo and their status:
 - [x] `telegraf` — applied ✅
 - [x] `backup` (pgBackRest) — added to `postgres` role; WAL streaming to local + S3, daily full + hourly diff
   - Immich Postgres backed up via `immich-pg-backup` Nomad periodic job (daily pg_dump)
-  - [ ] Restic for app config volumes — not yet written
+  - [x] Restic for app config volumes — `restic` Ansible role with systemd timers (daily backup, weekly prune)
 - [ ] `nfs` — not yet written (needed for Phase 2/3)
 
 ### SATA backup drive
@@ -755,11 +753,11 @@ sudo apt remove postgresql-16
 rm -rf /mnt/backups/pg-migration/restored /mnt/backups/pg-migration/restored-immich
 ```
 
-- [ ] Restore shared Barman backup (`postgres16-v5`)
-- [ ] Restore Immich Barman backup (`immich-postgres16-v1`)
-- [ ] Dump all databases from temporary PG16
-- [ ] Verify all dump files
-- [ ] Remove temporary PG16
+- [x] Restore shared Barman backup (`postgres16-v5`)
+- [x] Restore Immich Barman backup (`immich-postgres16-v1`)
+- [x] Dump all databases from temporary PG16
+- [x] Verify all dump files
+- [x] Remove temporary PG16
 
 ### PostgreSQL 17 on epyc (shared, host-installed)
 
@@ -860,7 +858,7 @@ nomad job run jobs/epyc/immich-postgres.nomad.hcl
 
 - [x] Deploy Immich Postgres as Nomad job on port 5433
 - [x] Restore immich database (see procedure below)
-- [ ] Verify Immich connects and VectorChord reindexes successfully
+- [x] Verify Immich connects and VectorChord reindexes successfully
 
 #### Immich database restore procedure
 
@@ -985,7 +983,7 @@ ansible-playbook playbooks/site.yml --limit epyc --tags caddy
 - [x] Build custom Caddy binary with `caddy-dns/cloudflare` plugin
 - [x] Configure Cloudflare API token for DNS challenge
 - [x] Deploy as systemd service on epyc
-- [ ] Verify HTTPS works for both internal (LAN) and external (tunnel) access (after DNS + cloudflared are configured)
+- [x] Verify HTTPS works for both internal (LAN) and external (tunnel) access
 - [ ] Routes to h4uno/h4dos/beelink1 will 502 until those nodes are up — expected
 
 ### Cloudflared tunnel on epyc
@@ -1016,7 +1014,7 @@ nomad job run jobs/epyc/cloudflared.nomad.hcl
 - [x] Create new tunnel for epyc
 - [x] Store tunnel credentials in Nomad Variables
 - [x] Deploy cloudflared as Nomad job with catch-all ingress to Caddy
-- [ ] Verify external access works (after first app + DNS CNAME is configured)
+- [x] Verify external access works via cloudflared tunnel
 
 ### DNS (do now, not later)
 
@@ -1032,14 +1030,14 @@ from the old k8s tunnel (`external.groovie.org`) to the new epyc tunnel
 
 - [x] Create `cloudflare-dns` Ansible role
 - [x] Run playbook to create CNAME records for public apps pointing to new tunnel
-- [ ] Verify public apps resolve externally to Cloudflare (after apps are deployed)
+- [x] Verify public apps resolve externally to Cloudflare
 
 **opnSense host overrides (all apps):**
 - [x] Create API key+secret in opnSense, stored in 1Password
 - [x] Install `ansibleguy.opnsense` collection
 - [x] Create `opnsense-dns` Ansible role
 - [x] Run playbook to create all ~22 host overrides pointing to 192.168.2.35
-- [ ] Verify LAN clients resolve all app hostnames to 192.168.2.35
+- [x] Verify LAN clients resolve all app hostnames to 192.168.2.35
 
 ```bash
 ansible-playbook playbooks/site.yml --tags cloudflare-dns
@@ -1180,11 +1178,11 @@ job "immich" {
 
 - [x] epyc primary IP: 192.168.2.35 — configured via `base` role ✅
 - [x] epyc secondary IP: 192.168.2.202 — configured via `base` role ✅
-- [ ] opnSense: create API key for Ansible, reserve all IPs in DHCP
-- [ ] opnSense DNS: run `opnsense-dns` playbook (see DNS section above)
-- [ ] Cloudflare DNS: run `cloudflare-dns` playbook (see DNS section above)
-- [ ] Cloudflared tunnel on epyc with catch-all to Caddy
-- [ ] Unifi devices already inform to 192.168.2.202 — no re-adoption needed
+- [x] opnSense: create API key for Ansible, reserve all IPs in DHCP
+- [x] opnSense DNS: run `opnsense-dns` playbook
+- [x] Cloudflare DNS: run `cloudflare-dns` playbook
+- [x] Cloudflared tunnel on epyc with catch-all to Caddy (via HTTP listener on :8780)
+- [x] Unifi devices already inform to 192.168.2.202 — no re-adoption needed
 
 ---
 

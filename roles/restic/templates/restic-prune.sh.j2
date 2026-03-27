@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+export RESTIC_PASSWORD_FILE=/etc/restic/password
+source /etc/restic/s3.env
+
+# Prune local repo
+restic -r {{ restic_local_repo }} forget \
+  --keep-daily {{ restic_keep_daily }} \
+  --keep-weekly {{ restic_keep_weekly }} \
+  --keep-monthly {{ restic_keep_monthly }} \
+  --prune
+
+# Prune S3 repo
+restic -r {{ restic_s3_repo }} forget \
+  --keep-daily {{ restic_keep_daily }} \
+  --keep-weekly {{ restic_keep_weekly }} \
+  --keep-monthly {{ restic_keep_monthly }} \
+  --prune
+
+echo "Restic prune completed at $(date)"

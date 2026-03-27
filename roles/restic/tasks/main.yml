@@ -1,0 +1,123 @@
+---
+- name: Install restic
+  ansible.builtin.apt:
+    name: restic
+    state: present
+    update_cache: true
+
+- name: Create local backup repo directory
+  ansible.builtin.file:
+    path: "{{ restic_local_repo }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Create restic config directory
+  ansible.builtin.file:
+    path: /etc/restic
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Deploy restic password file
+  ansible.builtin.copy:
+    content: "{{ restic_password }}"
+    dest: /etc/restic/password
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Deploy S3 environment file
+  ansible.builtin.copy:
+    content: |
+      export AWS_ACCESS_KEY_ID={{ restic_s3_key }}
+      export AWS_SECRET_ACCESS_KEY={{ restic_s3_secret }}
+    dest: /etc/restic/s3.env
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Initialize local restic repo
+  ansible.builtin.command:
+    cmd: restic -r {{ restic_local_repo }} init --password-file /etc/restic/password
+    creates: "{{ restic_local_repo }}/config"
+
+- name: Initialize S3 restic repo
+  ansible.builtin.shell:
+    cmd: >
+      . /etc/restic/s3.env &&
+      restic -r {{ restic_s3_repo }} init --password-file /etc/restic/password &&
+      touch /etc/restic/.s3-initialized
+    creates: /etc/restic/.s3-initialized
+
+- name: Deploy restic backup script
+  ansible.builtin.template:
+    src: restic-backup.sh.j2
+    dest: /usr/local/bin/restic-backup.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy restic prune script
+  ansible.builtin.template:
+    src: restic-prune.sh.j2
+    dest: /usr/local/bin/restic-prune.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy restic-backup systemd service
+  ansible.builtin.template:
+    src: restic-backup.service.j2
+    dest: /etc/systemd/system/restic-backup.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+
+- name: Deploy restic-backup systemd timer
+  ansible.builtin.template:
+    src: restic-backup.timer.j2
+    dest: /etc/systemd/system/restic-backup.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart restic-backup timer
+
+- name: Deploy restic-prune systemd service
+  ansible.builtin.template:
+    src: restic-prune.service.j2
+    dest: /etc/systemd/system/restic-prune.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+
+- name: Deploy restic-prune systemd timer
+  ansible.builtin.template:
+    src: restic-prune.timer.j2
+    dest: /etc/systemd/system/restic-prune.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart restic-prune timer
+
+- name: Enable and start restic-backup timer
+  ansible.builtin.systemd:
+    name: restic-backup.timer
+    state: started
+    enabled: true
+
+- name: Enable and start restic-prune timer
+  ansible.builtin.systemd:
+    name: restic-prune.timer
+    state: started
+    enabled: true

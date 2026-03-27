@@ -1,0 +1,10 @@
+[Unit]
+Description=Restic prune old snapshots
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/restic-prune.sh
+Nice=19
+IOSchedulingClass=idle
