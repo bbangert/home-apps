@@ -47,6 +47,8 @@ nomad_host_volumes:
     path: /srv/victoriametrics/data
   - name: grafana-data
     path: /srv/grafana/data
+  - name: grafana-dashboards
+    path: /srv/grafana/dashboards
 
 caddy_routes:
   - hostname: auth.groovie.org

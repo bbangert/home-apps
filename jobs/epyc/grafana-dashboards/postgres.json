@@ -1,0 +1,364 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_VICTORIAMETRICS",
+      "label": "VictoriaMetrics",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    }
+  ],
+  "uid": "postgres-stats",
+  "title": "PostgreSQL - epyc",
+  "description": "PostgreSQL database metrics for the epyc node",
+  "editable": false,
+  "version": 1,
+  "schemaVersion": 39,
+  "tags": ["postgresql", "database", "epyc"],
+  "timezone": "browser",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "30s",
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "liveNow": false,
+  "templating": {
+    "list": [
+      {
+        "name": "database",
+        "type": "query",
+        "label": "Database",
+        "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+        "query": "label_values(postgresql_numbackends, datname)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "sort": 1
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Active Connections",
+      "description": "Number of active backends per database",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "connections",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "short",
+          "min": 0,
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "postgresql_numbackends{host=\"epyc\", datname=~\"$database\"}",
+          "legendFormat": "{{datname}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Transactions/sec",
+      "description": "Transaction commit and rollback rates per database",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "tx/s",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "ops",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(postgresql_xact_commit{host=\"epyc\", datname=~\"$database\"}[5m])",
+          "legendFormat": "Commit {{datname}}"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(postgresql_xact_rollback{host=\"epyc\", datname=~\"$database\"}[5m])",
+          "legendFormat": "Rollback {{datname}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tuple Operations/sec",
+      "description": "Rate of tuple inserts, updates, deletes, and fetches per database",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "tuples/s",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "ops",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(postgresql_tup_inserted{host=\"epyc\", datname=~\"$database\"}[5m])",
+          "legendFormat": "Inserted {{datname}}"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(postgresql_tup_updated{host=\"epyc\", datname=~\"$database\"}[5m])",
+          "legendFormat": "Updated {{datname}}"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(postgresql_tup_deleted{host=\"epyc\", datname=~\"$database\"}[5m])",
+          "legendFormat": "Deleted {{datname}}"
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(postgresql_tup_fetched{host=\"epyc\", datname=~\"$database\"}[5m])",
+          "legendFormat": "Fetched {{datname}}"
+        }
+      ]
+    },
+    {
+      "type": "gauge",
+      "title": "Cache Hit Ratio",
+      "description": "Buffer cache hit ratio per database (higher is better)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 4,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "red" },
+              { "value": 80, "color": "yellow" },
+              { "value": 95, "color": "green" }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "postgresql_blks_hit{host=\"epyc\", datname=~\"$database\"} / (postgresql_blks_hit{host=\"epyc\", datname=~\"$database\"} + postgresql_blks_read{host=\"epyc\", datname=~\"$database\"}) * 100",
+          "legendFormat": "{{datname}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Temp Files/sec",
+      "description": "Rate of temporary files created per database",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 5,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "ops",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(postgresql_temp_files{host=\"epyc\", datname=~\"$database\"}[5m])",
+          "legendFormat": "{{datname}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Deadlocks",
+      "description": "Total deadlocks per database",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1, "color": "red" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "postgresql_deadlocks{host=\"epyc\", datname=~\"$database\"}",
+          "legendFormat": "{{datname}}"
+        }
+      ]
+    }
+  ]
+}
