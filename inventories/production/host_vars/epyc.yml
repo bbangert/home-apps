@@ -43,6 +43,10 @@ nomad_host_volumes:
     path: /srv/thelounge/config
   - name: duketogo-config
     path: /srv/duketogo/config
+  - name: victoriametrics-data
+    path: /srv/victoriametrics/data
+  - name: grafana-data
+    path: /srv/grafana/data
 
 caddy_routes:
   - hostname: auth.groovie.org
@@ -63,3 +67,9 @@ caddy_routes:
     backend: localhost:8888
   - hostname: paste.ofcode.org
     backend: localhost:6543
+  - hostname: grafana.groovie.org
+    backend: localhost:3001
+
+telegraf_collect_docker: true
+telegraf_collect_postgres: true
+telegraf_collect_nomad: true

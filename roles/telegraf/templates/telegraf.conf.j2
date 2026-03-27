@@ -1,0 +1,57 @@
+# Telegraf configuration - managed by Ansible
+
+[global_tags]
+  host = "{{ inventory_hostname }}"
+
+[agent]
+  interval = "30s"
+  round_interval = true
+  flush_interval = "30s"
+
+###############################################################################
+#                            OUTPUT PLUGINS                                   #
+###############################################################################
+
+[[outputs.influxdb]]
+  urls = ["{{ telegraf_victoriametrics_url }}"]
+  database = "telegraf"
+  skip_database_creation = true
+
+###############################################################################
+#                            INPUT PLUGINS                                    #
+###############################################################################
+
+[[inputs.cpu]]
+  percpu = false
+  totalcpu = true
+
+[[inputs.mem]]
+
+[[inputs.disk]]
+  mount_points = ["/", "/mnt/backups"]
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+
+[[inputs.diskio]]
+
+[[inputs.net]]
+
+[[inputs.system]]
+
+[[inputs.processes]]
+
+{% if telegraf_collect_docker | bool %}
+[[inputs.docker]]
+  endpoint = "unix:///var/run/docker.sock"
+  timeout = "5s"
+
+{% endif %}
+{% if telegraf_collect_postgres | bool %}
+[[inputs.postgresql]]
+  address = "{{ telegraf_postgres_address }}"
+
+{% endif %}
+{% if telegraf_collect_nomad | bool %}
+[[inputs.nomad]]
+  url = "{{ telegraf_nomad_url }}"
+
+{% endif %}

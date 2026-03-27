@@ -563,7 +563,7 @@ Roles that exist in this repo and their status:
 - [x] `caddy` — applied ✅
 - [x] `cloudflare-dns` — applied ✅
 - [x] `opnsense-dns` — applied ✅
-- [ ] `telegraf` — not yet written (Telegraf agent for metrics collection)
+- [x] `telegraf` — applied ✅
 - [x] `backup` (pgBackRest) — added to `postgres` role; WAL streaming to local + S3, daily full + hourly diff
   - Immich Postgres backed up via `immich-pg-backup` Nomad periodic job (daily pg_dump)
   - [ ] Restic for app config volumes — not yet written
@@ -1116,9 +1116,12 @@ rsync -avP --rsync-path="sudo rsync" $SRC/paste/paste/ epyc:/srv/paste/config/
   - Added opnSense DNS override for smtp-relay.groovie.org
 - [ ] ~~Beszel agent — replaced by Telegraf + VictoriaMetrics + Grafana~~
 - [ ] ~~Dozzle — dropped; Nomad UI provides sufficient log access~~
-- [ ] Telegraf — host-installed via Ansible role (collects system, Docker, Nomad, Postgres metrics)
-- [ ] VictoriaMetrics — Nomad job on epyc (time-series storage, receives from Telegraf)
-- [ ] Grafana — Nomad job on epyc (dashboards, queries VictoriaMetrics)
+- [x] Telegraf — host-installed via Ansible role (collects system, Docker, Nomad, Postgres metrics)
+  - Uses InfluxDB line protocol output to VictoriaMetrics
+  - Collects: CPU, memory, disk, diskio, net, system, processes, Docker, PostgreSQL, Nomad
+- [x] VictoriaMetrics — Nomad job on epyc (port 8428, 12-month retention)
+  - Receives metrics from Telegraf via InfluxDB write endpoint
+- [x] Grafana — Nomad job on epyc (port 3001, VictoriaMetrics as Prometheus datasource)
 
 ### Example Nomad job (Immich)
 

@@ -1,0 +1,54 @@
+---
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Add InfluxData GPG key
+  ansible.builtin.get_url:
+    url: https://repos.influxdata.com/influxdata-archive.key
+    dest: /etc/apt/keyrings/influxdata.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add InfluxData apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/influxdata.asc]
+      https://repos.influxdata.com/debian
+      stable main
+    state: present
+    filename: influxdata
+
+- name: Install telegraf
+  ansible.builtin.apt:
+    name: telegraf
+    state: present
+    update_cache: true
+
+- name: Add telegraf user to docker group
+  ansible.builtin.user:
+    name: telegraf
+    groups: docker
+    append: true
+  notify: restart telegraf
+  when: telegraf_collect_docker | bool
+
+- name: Deploy telegraf configuration
+  ansible.builtin.template:
+    src: telegraf.conf.j2
+    dest: /etc/telegraf/telegraf.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart telegraf
+
+- name: Ensure telegraf is started and enabled
+  ansible.builtin.service:
+    name: telegraf
+    state: started
+    enabled: true

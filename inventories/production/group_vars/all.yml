@@ -52,9 +52,7 @@ all_apps:
   - zone: groovie.org
     name: frigate
   - zone: groovie.org
-    name: beszel
-  - zone: groovie.org
-    name: windmill
+    name: grafana
   - zone: ofcode.org
     name: paste
   - zone: groovie.org
