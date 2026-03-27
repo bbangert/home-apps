@@ -9,6 +9,7 @@ base_passwordless_sudo_path: "/etc/sudoers.d/90-{{ base_passwordless_sudo_user }
 base_visudo_path: /usr/sbin/visudo
 base_controller_public_key_file: "{{ lookup('env', 'HOME') ~ '/.ssh/id_ed25519_homestar.pub' }}"
 base_netplan_path: /etc/netplan/01-homestar.yaml
+base_unattended_upgrades: true
 base_core_packages:
   - python3
   - python3-apt
@@ -20,6 +21,7 @@ base_core_packages:
   - rsync
   - ca-certificates
   - gnupg
+  - unattended-upgrades
 base_extra_firewall_ports: []
 base_base_directories:
   - /srv

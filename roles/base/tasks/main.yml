@@ -58,6 +58,26 @@
   loop: "{{ base_base_directories }}"
   when: base_apply_baseline | bool
 
+- name: Configure unattended-upgrades
+  ansible.builtin.template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - base_apply_baseline | bool
+    - base_unattended_upgrades | bool
+
+- name: Enable automatic update timer
+  ansible.builtin.systemd:
+    name: apt-daily-upgrade.timer
+    state: started
+    enabled: true
+  when:
+    - base_apply_baseline | bool
+    - base_unattended_upgrades | bool
+
 - name: Ensure chrony is enabled
   ansible.builtin.service:
     name: chrony
