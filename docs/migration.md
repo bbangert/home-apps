@@ -1211,10 +1211,13 @@ Simplest node — just Frigate with hardware passthrough. Re-imaged with Ubuntu
 
 ## Phase 3: h4uno — Media Serving + Libraries
 
-**Status:** 🔴 Not started
+**Status:** ✅ Complete
 
-After re-imaging: run `base`, `docker`, `nomad`, `onepassword`,
-`nfs` (server), `telegraf`, and `backup` roles, then restore data and deploy jobs.
+Bootstrapped h4uno, applied all roles (`base`, `docker`, `nomad`, `onepassword`,
+`nfs` server, `telegraf`, `restic` with S3 + B2), restored data, deployed all apps.
+Komga OAuth configured via `application.yml` template (env vars don't work for
+deeply nested Spring Boot properties). Restic backs up `/srv` to S3 (excluding music)
+and `/srv/data/music` to B2 (`homestar-mediabackup`).
 
 ### NFS server setup
 
@@ -1239,13 +1242,13 @@ Directory structure on h4uno:
 
 ### Ansible roles for h4uno
 
-- [ ] `base`
-- [ ] `docker`
-- [ ] `nomad` (client only — connects to epyc:4647)
-- [ ] `onepassword`
-- [ ] `nfs` (server — exports `/srv/data`)
-- [ ] `telegraf` (metrics collection → VictoriaMetrics on epyc)
-- [ ] `restic` (backup app configs)
+- [x] `base` (including LVM expansion)
+- [x] `docker`
+- [x] `nomad` (client only — connects to epyc:4647)
+- [x] `onepassword`
+- [x] `nfs` (server — exports `/srv/data`)
+- [x] `telegraf` (metrics collection → VictoriaMetrics on epyc)
+- [x] `restic` (S3 for app configs, B2 for music)
 
 ### Data restoration
 
@@ -1263,11 +1266,11 @@ rsync -a /mnt/backup/music-assistant/music-assistant-config/ /srv/music-assistan
 
 ### Apps to deploy
 
-- [ ] NFS server (via Ansible `nfs` role)
-- [ ] Komga — config + assets (local)
-- [ ] Komf — config (local)
-- [ ] Calibre-Web — config (local) + `/srv/data/books/`
-- [ ] Music Assistant — config (local) + `/srv/data/music/`
+- [x] NFS server (via Ansible `nfs` role)
+- [x] Komga — config + assets (local), OAuth via application.yml
+- [x] Komf — config (local)
+- [x] Calibre-Web — config (local) + `/srv/data/books/`
+- [x] Music Assistant — config (local) + `/srv/data/music/`
 
 ---
 
