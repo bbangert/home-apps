@@ -38,6 +38,21 @@
   notify: restart telegraf
   when: telegraf_collect_docker | bool
 
+- name: Create telegraf PostgreSQL role
+  ansible.builtin.command:
+    cmd: sudo -u postgres psql -c "CREATE ROLE telegraf LOGIN;"
+  register: _telegraf_pg_role
+  changed_when: "'CREATE ROLE' in _telegraf_pg_role.stdout"
+  failed_when: _telegraf_pg_role.rc != 0 and 'already exists' not in _telegraf_pg_role.stderr
+  when: telegraf_collect_postgres | bool
+
+- name: Grant telegraf pg_monitor role
+  ansible.builtin.command:
+    cmd: sudo -u postgres psql -c "GRANT pg_monitor TO telegraf;"
+  register: _telegraf_pg_grant
+  changed_when: "'GRANT ROLE' in _telegraf_pg_grant.stdout"
+  when: telegraf_collect_postgres | bool
+
 - name: Deploy telegraf configuration
   ansible.builtin.template:
     src: telegraf.conf.j2

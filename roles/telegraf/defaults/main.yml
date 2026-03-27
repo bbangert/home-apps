@@ -1,6 +1,6 @@
 ---
 telegraf_victoriametrics_url: "http://127.0.0.1:8428"
-telegraf_postgres_address: "host=/var/run/postgresql user=postgres sslmode=disable"
+telegraf_postgres_address: "host=/var/run/postgresql user=telegraf dbname=postgres sslmode=disable"
 telegraf_nomad_url: "http://127.0.0.1:4646"
 telegraf_collect_docker: true
 telegraf_collect_postgres: false
