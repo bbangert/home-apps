@@ -1,0 +1,10 @@
+#!/bin/bash
+# Report restic backup age in seconds - managed by Ansible
+STAMP_FILE=/var/lib/restic-last-backup
+
+if [ -f "$STAMP_FILE" ]; then
+    LAST=$(cat "$STAMP_FILE")
+    NOW=$(date +%s)
+    AGE=$((NOW - LAST))
+    echo "restic_backup age_seconds=${AGE}i,last_backup=${LAST}i"
+fi

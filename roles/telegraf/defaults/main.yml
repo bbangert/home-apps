@@ -7,4 +7,11 @@ telegraf_collect_postgres: false
 telegraf_collect_nomad: false
 telegraf_collect_frigate: false
 telegraf_collect_intel_gpu: false
+telegraf_disk_mount_points:
+  - "/"
+  - "/mnt/backups"
+telegraf_systemd_units:
+  - "telegraf.service"
+  - "nomad.service"
+  - "docker.service"
 telegraf_frigate_url: "http://localhost:5000"

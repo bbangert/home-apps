@@ -44,3 +44,4 @@ restic -r {{ restic_b2_repo }} backup \
 
 {% endif %}
 echo "Restic backup completed at $(date)"
+date +%s > /var/lib/restic-last-backup

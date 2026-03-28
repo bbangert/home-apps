@@ -28,10 +28,14 @@
 [[inputs.mem]]
 
 [[inputs.disk]]
-  mount_points = ["/", "/mnt/backups"]
+  mount_points = {{ telegraf_disk_mount_points | to_json }}
   ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
 
 [[inputs.diskio]]
+
+[[inputs.systemd_units]]
+  unittype = "service"
+  pattern = "{{ telegraf_systemd_units | join(' ') }}"
 
 [[inputs.net]]
 
@@ -79,6 +83,13 @@
   url = "{{ telegraf_nomad_url }}"
 
 {% endif %}
+[[inputs.exec]]
+  commands = ["/usr/local/bin/restic-backup-age.sh"]
+  timeout = "5s"
+  data_format = "influx"
+  name_suffix = ""
+  interval = "5m"
+
 {% if telegraf_collect_intel_gpu | bool %}
 [[inputs.exec]]
   commands = ["/usr/local/bin/intel-gpu-stats.sh"]
