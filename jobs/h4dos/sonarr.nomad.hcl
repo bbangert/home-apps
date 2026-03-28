@@ -42,12 +42,10 @@ job "sonarr" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/onedr0p/sonarr-develop:4.0.14.2938"
+        image        = "lscr.io/linuxserver/sonarr:4.0.17"
         network_mode = "host"
         ports        = ["http"]
       }
-
-      user = "568:568"
 
       volume_mount {
         volume      = "config"
@@ -77,14 +75,9 @@ EOF
       }
 
       env {
-        TZ                        = "America/Los_Angeles"
-        SONARR__APP__INSTANCENAME = "Sonarr"
-        SONARR__APP__THEME        = "dark"
-        SONARR__AUTH__METHOD       = "External"
-        SONARR__AUTH__REQUIRED     = "DisabledForLocalAddresses"
-        SONARR__LOG__DBENABLED     = "False"
-        SONARR__LOG__LEVEL         = "info"
-        SONARR__SERVER__PORT       = "8989"
+        PUID                       = "568"
+        PGID                       = "568"
+        TZ                         = "America/Los_Angeles"
         SONARR__POSTGRES__HOST     = "192.168.2.35"
         SONARR__POSTGRES__PORT     = "5432"
         SONARR__POSTGRES__MAINDB   = "sonarr_main"

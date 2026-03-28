@@ -30,12 +30,10 @@ job "prowlarr" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/onedr0p/prowlarr-develop:1.32.2.4987"
+        image        = "lscr.io/linuxserver/prowlarr:2.3.0"
         network_mode = "host"
         ports        = ["http"]
       }
-
-      user = "568:568"
 
       volume_mount {
         volume      = "config"
@@ -55,14 +53,9 @@ EOF
       }
 
       env {
-        TZ                          = "America/Los_Angeles"
-        PROWLARR__APP__INSTANCENAME = "Prowlarr"
-        PROWLARR__APP__THEME        = "dark"
-        PROWLARR__AUTH__METHOD       = "External"
-        PROWLARR__AUTH__REQUIRED     = "DisabledForLocalAddresses"
-        PROWLARR__LOG__DBENABLED     = "False"
-        PROWLARR__LOG__LEVEL         = "info"
-        PROWLARR__SERVER__PORT       = "9696"
+        PUID                         = "568"
+        PGID                         = "568"
+        TZ                           = "America/Los_Angeles"
         PROWLARR__POSTGRES__HOST     = "192.168.2.35"
         PROWLARR__POSTGRES__PORT     = "5432"
         PROWLARR__POSTGRES__MAINDB   = "prowlarr_main"

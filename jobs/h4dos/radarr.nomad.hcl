@@ -42,12 +42,10 @@ job "radarr" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/onedr0p/radarr-develop:5.20.1.9773"
+        image        = "lscr.io/linuxserver/radarr:6.0.4"
         network_mode = "host"
         ports        = ["http"]
       }
-
-      user = "568:568"
 
       volume_mount {
         volume      = "config"
@@ -77,14 +75,9 @@ EOF
       }
 
       env {
-        TZ                        = "America/Los_Angeles"
-        RADARR__APP__INSTANCENAME = "Radarr"
-        RADARR__APP__THEME        = "dark"
-        RADARR__AUTH__METHOD       = "External"
-        RADARR__AUTH__REQUIRED     = "DisabledForLocalAddresses"
-        RADARR__LOG__DBENABLED     = "False"
-        RADARR__LOG__LEVEL         = "info"
-        RADARR__SERVER__PORT       = "7878"
+        PUID                       = "568"
+        PGID                       = "568"
+        TZ                         = "America/Los_Angeles"
         RADARR__POSTGRES__HOST     = "192.168.2.35"
         RADARR__POSTGRES__PORT     = "5432"
         RADARR__POSTGRES__MAINDB   = "radarr_main"
