@@ -17,12 +17,13 @@ All nodes are Nomad clients. Epyc is additionally the Nomad server.
 
 ## Nomad
 
-Nomad is configured with a single datacenter called `homestar`. All jobs use:
+Nomad is configured with a single datacenter called `homestar`. ACLs are enabled — all API requests require a valid token (`NOMAD_TOKEN`). All jobs use:
 
 - **Docker driver** with host networking (`network_mode = "host"`)
 - **Hostname constraints** to pin jobs to specific nodes
 - **Host volumes** for persistent storage (mapped from `/srv/*` directories)
 - **Nomad variables** for secrets (e.g., `nomadVar "nomad/jobs/<jobname>"`)
+- **ACL tokens** for authentication — operator tokens are stored in 1Password
 
 Job files live in `jobs/<node>/<app>.nomad.hcl`. The directory structure mirrors which node runs the app.
 
@@ -136,10 +137,11 @@ Immich has its own dedicated PostgreSQL instance (with pgvecto.rs) running as a 
 
 ## Secrets
 
-Secrets are managed through two mechanisms:
+Secrets are managed through three mechanisms:
 
 - **Ansible time:** The `op read` command (1Password CLI) is called locally during playbook runs to inject secrets into templates (e.g., restic passwords, Cloudflare API tokens).
 - **Nomad runtime:** Nomad variables (`nomadVar`) are used in job templates for app secrets (e.g., Authentik keys, Pushover credentials). These are set manually via `nomad var put`.
+- **Nomad ACL tokens:** Operator and management tokens are stored in 1Password. The `NOMAD_TOKEN` environment variable must be set for all `nomad` CLI commands.
 
 Nothing secret is stored in the repository.
 

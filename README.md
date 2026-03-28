@@ -47,9 +47,10 @@ Install the following on your local machine:
    eval $(op signin)
    ```
 
-5. Set the Nomad address for deploying jobs:
+5. Set the Nomad address and ACL token for deploying jobs:
    ```bash
    export NOMAD_ADDR=http://192.168.2.35:4646
+   export NOMAD_TOKEN=<your-operator-token>  # from 1Password
    ```
 
 ### Verify

@@ -2,10 +2,19 @@
 
 ## Common Commands
 
+All `nomad` commands require two environment variables:
+
+```bash
+export NOMAD_ADDR=http://192.168.2.35:4646
+export NOMAD_TOKEN=<your-operator-token>  # from 1Password
+```
+
+The examples below assume these are set.
+
 ### Deploying a Nomad job
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad job run jobs/epyc/grafana.nomad.hcl
+nomad job run jobs/epyc/grafana.nomad.hcl
 ```
 
 ### Running an Ansible playbook
@@ -33,27 +42,27 @@ Roles that use `op read` (restic, postgres, cloudflare-dns, opnsense-dns) requir
 ### Checking job status
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad job status grafana
+nomad job status grafana
 ```
 
 ### Reading job logs
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad alloc logs <alloc-id>
+nomad alloc logs <alloc-id>
 # Add -stderr for stderr output
-NOMAD_ADDR=http://192.168.2.35:4646 nomad alloc logs -stderr <alloc-id>
+nomad alloc logs -stderr <alloc-id>
 ```
 
 To find the allocation ID:
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad job status grafana | grep running
+nomad job status grafana | grep running
 ```
 
 ### Setting Nomad variables (secrets)
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad var put nomad/jobs/grafana \
+nomad var put nomad/jobs/grafana \
   PUSHOVER_USER_KEY=xxx \
   PUSHOVER_APP_KEY=xxx
 ```
@@ -67,11 +76,11 @@ When Renovate opens a PR with a Docker image update:
 3. Pull the changes locally: `git pull`
 4. Deploy the updated job:
    ```bash
-   NOMAD_ADDR=http://192.168.2.35:4646 nomad job run jobs/<node>/<app>.nomad.hcl
+   nomad job run jobs/<node>/<app>.nomad.hcl
    ```
 5. Verify the new allocation is healthy:
    ```bash
-   NOMAD_ADDR=http://192.168.2.35:4646 nomad job status <app>
+   nomad job status <app>
    ```
 
 For apps with databases (Sonarr, Radarr, Lidarr, Prowlarr, Authentik, Linkwarden), check whether the upstream release notes mention database migrations. Major version upgrades (e.g., PostgreSQL 17 to 18, or app major version bumps) may require manual steps like `pg_dump`/`pg_restore` or granting schema permissions.
@@ -210,7 +219,7 @@ The `immich-pg-backup` Nomad job runs as a periodic batch job (daily at 3:00 AM)
 Check recent backup runs:
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad job status immich-pg-backup
+nomad job status immich-pg-backup
 ```
 
 List local backup files:
@@ -222,7 +231,7 @@ ssh ansible@192.168.2.35 ls -lh /mnt/backups/immich-pg/
 Run a manual backup:
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad job periodic force immich-pg-backup
+nomad job periodic force immich-pg-backup
 ```
 
 **Restoring:**
@@ -247,19 +256,19 @@ Telegraf collects PostgreSQL metrics on epyc for the shared PostgreSQL instance,
 
 1. Check the job status for placement failures:
    ```bash
-   NOMAD_ADDR=http://192.168.2.35:4646 nomad job status <app>
+   nomad job status <app>
    ```
 2. Look for constraint errors — the most common cause is the host volume not existing or the node being down.
 3. Check allocation events:
    ```bash
-   NOMAD_ADDR=http://192.168.2.35:4646 nomad alloc status <alloc-id>
+   nomad alloc status <alloc-id>
    ```
 
 ### Container keeps restarting
 
 1. Check logs for the failing allocation:
    ```bash
-   NOMAD_ADDR=http://192.168.2.35:4646 nomad alloc logs -stderr <alloc-id>
+   nomad alloc logs -stderr <alloc-id>
    ```
 2. Common causes:
    - **Port conflict:** Another app is using the same port. Check with `ss -tlnp` on the host.

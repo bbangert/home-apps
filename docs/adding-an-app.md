@@ -2,6 +2,8 @@
 
 This guide walks through deploying a new application to the cluster. The example adds a hypothetical app called "myapp" to epyc.
 
+> **Prerequisites:** All `nomad` commands require `NOMAD_ADDR` and `NOMAD_TOKEN` to be set. See [Operations](operations.md#common-commands).
+
 ## 1. Choose a node
 
 Decide which node will run the app based on its resource needs and any hardware requirements (GPU, NFS access, etc.). See the [architecture doc](architecture.md) for node roles.
@@ -183,7 +185,7 @@ Then add the database connection details to the Nomad job's environment variable
 If the app needs secrets at runtime, store them as Nomad variables **before deploying**:
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad var put nomad/jobs/myapp \
+nomad var put nomad/jobs/myapp \
   SECRET_KEY=xxx \
   API_TOKEN=xxx
 ```
@@ -206,13 +208,13 @@ EOF
 ## 9. Deploy
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad job run jobs/epyc/myapp.nomad.hcl
+nomad job run jobs/epyc/myapp.nomad.hcl
 ```
 
 Verify it's running:
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad job status myapp
+nomad job status myapp
 ```
 
 Check the app is reachable at `https://myapp.groovie.org`.
@@ -264,7 +266,7 @@ If the app needs a specific alert (e.g., a health endpoint check), add a rule to
 After editing, redeploy Grafana:
 
 ```bash
-NOMAD_ADDR=http://192.168.2.35:4646 nomad job run jobs/epyc/grafana.nomad.hcl
+nomad job run jobs/epyc/grafana.nomad.hcl
 ```
 
 ### Adding a dashboard
