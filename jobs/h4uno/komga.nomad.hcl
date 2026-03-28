@@ -42,7 +42,7 @@ job "komga" {
       driver = "docker"
 
       config {
-        image        = "gotson/komga:1.24.1"
+        image        = "gotson/komga:1.24.3"
         network_mode = "host"
         ports        = ["http"]
       }
