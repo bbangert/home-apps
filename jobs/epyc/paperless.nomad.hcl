@@ -86,7 +86,7 @@ EOF
         PAPERLESS_DBUSER   = "paperless"
 
         # Redis (Valkey)
-        PAPERLESS_REDIS = "redis://127.0.0.1:6379"
+        PAPERLESS_REDIS = "redis://127.0.0.1:6379/3"
 
         # OIDC via Authentik
         PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect"
