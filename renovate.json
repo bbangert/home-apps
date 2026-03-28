@@ -11,7 +11,12 @@
       "datasourceTemplate": "docker"
     }
   ],
+  "ignoreDeps": [],
   "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "allowedVersions": "!/^.*(unstable|nightly|beta|alpha|rc|dev).*$/i"
+    },
     {
       "matchDatasources": ["docker"],
       "matchPackageNames": ["lscr.io/linuxserver/**"],
