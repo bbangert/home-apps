@@ -1,8 +1,5 @@
 namespace "default" {
-  policy       = "write"
-  capabilities = ["submit-job", "read-job", "alloc-exec",
-                   "alloc-lifecycle", "dispatch-job",
-                   "read-logs", "read-fs"]
+  policy = "write"
 
   variables {
     path "*" {

@@ -52,6 +52,12 @@ nomad_host_volumes:
     path: /srv/grafana/dashboards
   - name: ocis-data
     path: /srv/ocis/data
+  - name: paperless-data
+    path: /srv/paperless/data
+  - name: paperless-media
+    path: /srv/paperless/media
+  - name: paperless-consume
+    path: /srv/paperless/consume
 
 caddy_routes:
   - hostname: auth.groovie.org
@@ -96,6 +102,8 @@ caddy_routes:
     backend: 192.168.2.39:8080
   - hostname: prowlarr.groovie.org
     backend: 192.168.2.39:9696
+  - hostname: paperless.groovie.org
+    backend: localhost:8010
 
 telegraf_collect_docker: true
 telegraf_collect_postgres: true
