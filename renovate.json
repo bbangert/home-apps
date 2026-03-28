@@ -20,7 +20,7 @@
     {
       "matchDatasources": ["docker"],
       "matchPackageNames": ["lscr.io/linuxserver/**"],
-      "versioning": "loose"
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
     },
     {
       "matchDatasources": ["docker"],
