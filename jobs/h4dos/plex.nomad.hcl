@@ -36,7 +36,7 @@ job "plex" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/onedr0p/plex:1.41.4.9463-630c9f557"
+        image        = "lscr.io/linuxserver/plex:1.43.0"
         network_mode = "host"
         ports        = ["http"]
         devices      = [{
@@ -57,6 +57,8 @@ job "plex" {
       }
 
       env {
+        PUID               = "568"
+        PGID               = "568"
         TZ                 = "America/Los_Angeles"
         PLEX_ADVERTISE_URL = "https://192.168.2.39:32400,https://plex.groovie.org:443"
         PLEX_NO_AUTH_NETWORKS = "192.168.0.0/16"
