@@ -19,7 +19,7 @@ base_extra_firewall_ports:
 nfs_role: server
 nfs_exports:
   - path: /srv/data
-    clients: "192.168.2.39(rw,sync,no_subtree_check,no_root_squash)"
+    clients: "192.168.2.39(rw,sync,no_subtree_check)"
 
 telegraf_victoriametrics_url: "http://192.168.2.35:8428"
 telegraf_collect_docker: true
