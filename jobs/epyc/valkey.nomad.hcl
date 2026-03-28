@@ -26,7 +26,7 @@ job "valkey" {
       driver = "docker"
 
       config {
-        image        = "valkey/valkey:8-alpine"
+        image        = "valkey/valkey:9-alpine"
         network_mode = "host"
         ports        = ["redis"]
         args         = ["valkey-server", "--bind", "127.0.0.1", "--port", "6379"]
