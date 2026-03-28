@@ -14,7 +14,7 @@
   "packageRules": [
     {
       "matchDatasources": ["docker"],
-      "matchPackageNames": ["lscr.io/linuxserver/lidarr"],
+      "matchPackageNames": ["lscr.io/linuxserver/**"],
       "versioning": "loose"
     },
     {

@@ -36,12 +36,10 @@ job "sabnzbd" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/onedr0p/sabnzbd:4.4.1"
+        image        = "lscr.io/linuxserver/sabnzbd:4.5.5"
         network_mode = "host"
         ports        = ["http"]
       }
-
-      user = "568:568"
 
       volume_mount {
         volume      = "config"
@@ -65,6 +63,8 @@ EOF
       }
 
       env {
+        PUID                           = "568"
+        PGID                           = "568"
         TZ                             = "America/Los_Angeles"
         SABNZBD__PORT                  = "8080"
         SABNZBD__HOST_WHITELIST_ENTRIES = "sabnzbd,sabnzbd.groovie.org"
