@@ -122,6 +122,24 @@
     - base_apply_baseline | bool
     - base_manage_controller_authorized_key | bool
 
+- name: Harden SSH — disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PasswordAuthentication"
+    line: "PasswordAuthentication no"
+    validate: "sshd -t -f %s"
+  when: base_apply_baseline | bool
+  notify: restart sshd
+
+- name: Harden SSH — disable keyboard-interactive authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?KbdInteractiveAuthentication"
+    line: "KbdInteractiveAuthentication no"
+    validate: "sshd -t -f %s"
+  when: base_apply_baseline | bool
+  notify: restart sshd
+
 - name: Allow SSH through ufw
   community.general.ufw:
     rule: allow

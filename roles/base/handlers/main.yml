@@ -1,4 +1,9 @@
 ---
+- name: restart sshd
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+
 - name: Validate rendered netplan
   listen: validate and apply netplan
   ansible.builtin.command: netplan generate
