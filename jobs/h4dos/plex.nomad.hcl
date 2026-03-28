@@ -43,6 +43,7 @@ job "plex" {
           host_path      = "/dev/dri"
           container_path = "/dev/dri"
         }]
+        group_add    = ["993"]
       }
 
       volume_mount {
