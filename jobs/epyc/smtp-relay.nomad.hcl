@@ -24,7 +24,7 @@ job "smtp-relay" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/foxcpp/maddy:0.8.2"
+        image        = "ghcr.io/foxcpp/maddy:0.9.2"
         network_mode = "host"
         ports        = ["smtp"]
         volumes      = ["local/maddy.conf:/data/maddy.conf:ro"]
