@@ -10,5 +10,12 @@
       ],
       "datasourceTemplate": "docker"
     }
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["lscr.io/linuxserver/lidarr"],
+      "versioning": "loose"
+    }
   ]
 }
