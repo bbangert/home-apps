@@ -79,6 +79,14 @@
   url = "{{ telegraf_nomad_url }}"
 
 {% endif %}
+{% if telegraf_collect_intel_gpu | bool %}
+[[inputs.exec]]
+  commands = ["/usr/local/bin/intel-gpu-stats.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_suffix = ""
+
+{% endif %}
 {% if telegraf_collect_frigate | bool %}
 [[inputs.exec]]
   commands = ["/usr/local/bin/frigate-stats.sh"]

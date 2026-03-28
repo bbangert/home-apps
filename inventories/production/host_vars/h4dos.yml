@@ -24,6 +24,7 @@ nfs_mounts:
 
 telegraf_victoriametrics_url: "http://192.168.2.35:8428"
 telegraf_collect_docker: true
+telegraf_collect_intel_gpu: true
 
 restic_enable_local_repo: false
 restic_backup_paths:

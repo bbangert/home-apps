@@ -1,0 +1,32 @@
+#!/bin/bash
+# Collect Intel GPU metrics via intel_gpu_top and output InfluxDB line protocol
+# Managed by Ansible
+
+# Run intel_gpu_top for 2 seconds, extract the second JSON object (first is often zeroed)
+RAW=$(timeout 3 intel_gpu_top -J -s 500 -o - 2>/dev/null)
+
+if [ -z "$RAW" ]; then
+    exit 0
+fi
+
+# Extract second complete JSON object between { and } using awk
+OBJ=$(echo "$RAW" | awk 'BEGIN{n=0; capture=0; obj=""} /^\{/{n++; if(n==2){capture=1; obj=""}} capture{obj=obj $0 "\n"} /^\}/ && capture{print obj; exit}')
+
+if [ -z "$OBJ" ]; then
+    # Fall back to first object
+    OBJ=$(echo "$RAW" | awk 'BEGIN{capture=0; obj=""} /^\{/{capture=1; obj=""} capture{obj=obj $0 "\n"} /^\}/ && capture{print obj; exit}')
+fi
+
+if [ -z "$OBJ" ]; then
+    exit 0
+fi
+
+FREQ_REQ=$(echo "$OBJ" | jq -r '.frequency.requested // 0')
+FREQ_ACT=$(echo "$OBJ" | jq -r '.frequency.actual // 0')
+RC6=$(echo "$OBJ" | jq -r '.rc6.value // 0')
+POWER_GPU=$(echo "$OBJ" | jq -r '.power.GPU // 0')
+POWER_PKG=$(echo "$OBJ" | jq -r '.power.Package // 0')
+
+echo "intel_gpu frequency_requested=${FREQ_REQ},frequency_actual=${FREQ_ACT},rc6=${RC6},power_gpu=${POWER_GPU},power_package=${POWER_PKG}"
+
+echo "$OBJ" | jq -r '.engines | to_entries[] | "intel_gpu_engine,engine=\(.key | gsub(" "; "_") | gsub("/"; "_")) busy=\(.value.busy),sema=\(.value.sema),wait=\(.value.wait)"'

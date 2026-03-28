@@ -547,6 +547,101 @@
           "legendFormat": "Processes"
         }
       ]
+    },
+    {
+      "type": "row",
+      "title": "Intel GPU",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+      "id": 20,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU Engine Usage %",
+      "description": "Intel GPU engine utilization (Video, Render, Blitter). Only available on Intel GPU nodes.",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 21,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 37 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "%",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "intel_gpu_engine_busy{host=\"$host\"}",
+          "legendFormat": "{{engine}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU Frequency",
+      "description": "Intel GPU requested and actual frequency",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 22,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 37 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "MHz",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "MHz",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "intel_gpu_frequency_requested{host=\"$host\"}",
+          "legendFormat": "Requested"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "intel_gpu_frequency_actual{host=\"$host\"}",
+          "legendFormat": "Actual"
+        }
+      ]
     }
   ]
 }

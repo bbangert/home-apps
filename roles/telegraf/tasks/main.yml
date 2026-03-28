@@ -53,6 +53,24 @@
   changed_when: "'GRANT ROLE' in _telegraf_pg_grant.stdout"
   when: telegraf_collect_postgres | bool
 
+- name: Install intel-gpu-tools for GPU metrics
+  ansible.builtin.apt:
+    name:
+      - intel-gpu-tools
+      - jq
+    state: present
+  when: telegraf_collect_intel_gpu | bool
+
+- name: Deploy Intel GPU stats script
+  ansible.builtin.template:
+    src: intel-gpu-stats.sh.j2
+    dest: /usr/local/bin/intel-gpu-stats.sh
+    owner: root
+    group: root
+    mode: "0755"
+  notify: restart telegraf
+  when: telegraf_collect_intel_gpu | bool
+
 - name: Install jq for Frigate stats script
   ansible.builtin.apt:
     name: jq
