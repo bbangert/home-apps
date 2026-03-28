@@ -49,7 +49,7 @@ job "immich" {
       }
 
       config {
-        image        = "ghcr.io/immich-app/postgres:17-vectorchord0.5.3-pgvector0.8.1"
+        image        = "ghcr.io/immich-app/postgres:18-vectorchord0.5.3-pgvector0.8.1"
         network_mode = "host"
         ports        = ["pg"]
       }
