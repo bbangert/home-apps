@@ -15,14 +15,6 @@
   roles:
     - role: docker
 
-- name: Install and configure 1Password CLI
-  hosts: epyc
-  gather_facts: true
-  become: true
-  tags: [onepassword]
-  roles:
-    - role: onepassword
-
 - name: Configure NFS server/client
   hosts: all
   gather_facts: true

@@ -22,7 +22,7 @@ Install the following on your local machine:
 
 - **Ansible** — for host configuration and playbook runs
 - **Nomad CLI** — for deploying and managing jobs
-- **1Password CLI (`op`)** — for secrets (required by restic, postgres, cloudflare-dns, and opnsense-dns roles)
+- **1Password CLI (`op`)** — for secrets (required locally by restic, postgres, cloudflare-dns, and opnsense-dns roles)
 
 ### Setup
 
@@ -82,7 +82,7 @@ All nodes run Ubuntu 24.04 and are provisioned from bare metal using Ansible. No
 - [Grafana](https://grafana.com/): Dashboards and alerting with Pushover notifications.
 - [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/): Metrics collection agent deployed on every node.
 - [Restic](https://restic.net/): Encrypted backups to AWS S3 and Backblaze B2.
-- [1Password CLI](https://developer.1password.com/docs/cli/): Secrets are read from 1Password vaults at deploy time — nothing is stored in the repo.
+- [1Password CLI](https://developer.1password.com/docs/cli/): Secrets are read locally from 1Password vaults at deploy time — nothing is stored in the repo.
 
 ### Automation
 
@@ -116,7 +116,6 @@ Unattended security upgrades are enabled on all nodes via `apt` — hosts auto-r
 | **postgres** | PostgreSQL 16 server, database and role creation |
 | **caddy** | Caddy reverse proxy with Cloudflare DNS plugin |
 | **nfs** | NFS server (h4uno) and client (h4dos) configuration |
-| **onepassword** | 1Password CLI installation |
 | **cloudflare-dns** | CNAME records for publicly accessible apps |
 | **opnsense-dns** | Unbound host overrides on the opnSense router |
 | **restic** | Backup scripts and schedules for S3, B2, and local repos |

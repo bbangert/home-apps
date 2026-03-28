@@ -81,19 +81,18 @@ Ansible handles all host-level configuration. The main playbook is `playbooks/si
 
 1. **base** — OS packages, static networking (netplan), SSH keys, UFW firewall, unattended upgrades
 2. **docker** — Docker daemon
-3. **onepassword** — 1Password CLI (epyc only)
-4. **nfs** — NFS server on h4uno, client on h4dos
-5. **nomad** — Server on epyc, client on all nodes, host volume declarations
-6. **postgres** — PostgreSQL 16 on epyc, database/role creation
-7. **caddy** — Reverse proxy on epyc, Caddyfile from `caddy_routes`
-8. **cloudflare-dns** — CNAME records for public apps (runs locally)
-9. **restic** — Backup scripts and cron schedules on all nodes
-10. **telegraf** — Metrics collection on all nodes
-11. **opnsense-dns** — Unbound host overrides (runs locally)
+3. **nfs** — NFS server on h4uno, client on h4dos
+4. **nomad** — Server on epyc, client on all nodes, host volume declarations
+5. **postgres** — PostgreSQL 17 on epyc, database/role creation
+6. **caddy** — Reverse proxy on epyc, Caddyfile from `caddy_routes`
+7. **cloudflare-dns** — CNAME records for public apps (runs locally)
+8. **restic** — Backup scripts and cron schedules on all nodes
+9. **telegraf** — Metrics collection on all nodes
+10. **opnsense-dns** — Unbound host overrides (runs locally)
 
 ### Variable hierarchy
 
-- `group_vars/all.yml` — Shared settings: domains, app list, 1Password references, Nomad datacenter
+- `group_vars/all.yml` — Shared settings: domains, app list, 1Password item paths, Nomad datacenter
 - `host_vars/<node>.yml` — Per-node: IP addresses, firewall ports, Nomad host volumes, Caddy routes, role-specific toggles
 
 ## Networking
@@ -139,11 +138,11 @@ Immich has its own dedicated PostgreSQL instance (with pgvecto.rs) running as a 
 
 Secrets are managed through three mechanisms:
 
-- **Ansible time:** The `op read` command (1Password CLI) is called locally during playbook runs to inject secrets into templates (e.g., restic passwords, Cloudflare API tokens).
-- **Nomad runtime:** Nomad variables (`nomadVar`) are used in job templates for app secrets (e.g., Authentik keys, Pushover credentials). These are set manually via `nomad var put`.
+- **Ansible time:** The `op read` command (1Password CLI) runs on the operator's workstation via Ansible `pipe` lookups to inject secrets into templates (e.g., restic passwords, Cloudflare API tokens). The 1Password CLI is not installed on any cluster hosts.
+- **Nomad runtime:** Nomad variables (`nomadVar`) are used in job templates for app secrets (e.g., Authentik keys, Pushover credentials). These are set from the operator's workstation via `nomad var put` with values from 1Password.
 - **Nomad ACL tokens:** Operator and management tokens are stored in 1Password. The `NOMAD_TOKEN` environment variable must be set for all `nomad` CLI commands.
 
-Nothing secret is stored in the repository.
+Nothing secret is stored in the repository or on hosts outside of the rendered config files.
 
 ## Monitoring
 

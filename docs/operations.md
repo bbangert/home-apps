@@ -37,7 +37,7 @@ Target a specific role:
 ansible-playbook playbooks/site.yml -l epyc -t caddy
 ```
 
-Roles that use `op read` (restic, postgres, cloudflare-dns, opnsense-dns) require 1Password CLI authentication. If you only need to run a role like telegraf or base, you can skip authentication by targeting just that tag.
+Roles that use `op read` (restic, postgres, cloudflare-dns, opnsense-dns) require 1Password CLI authentication on your local machine. If you only need to run a role like telegraf or base, you can skip authentication by targeting just that tag.
 
 ### Checking job status
 

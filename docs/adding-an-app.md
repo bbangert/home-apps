@@ -182,12 +182,12 @@ Then add the database connection details to the Nomad job's environment variable
 
 ## 8. Add secrets (if needed)
 
-If the app needs secrets at runtime, store them as Nomad variables **before deploying**:
+If the app needs secrets at runtime, first store them in 1Password under the HomeCluster vault, then set them as Nomad variables using `op read` **before deploying**:
 
 ```bash
 nomad var put nomad/jobs/myapp \
-  SECRET_KEY=xxx \
-  API_TOKEN=xxx
+  SECRET_KEY="$(op read 'op://HomeCluster/myapp/SECRET_KEY')" \
+  API_TOKEN="$(op read 'op://HomeCluster/myapp/API_TOKEN')"
 ```
 
 Reference them in the job file with a template block:
