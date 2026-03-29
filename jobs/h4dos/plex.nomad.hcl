@@ -66,8 +66,9 @@ job "plex" {
       }
 
       resources {
-        cpu    = 2000
-        memory = 8192
+        cpu        = 2000
+        memory     = 4096
+        memory_max = 8192
       }
     }
   }

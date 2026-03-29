@@ -42,8 +42,9 @@ job "victoriametrics" {
       }
 
       resources {
-        cpu    = 500
-        memory = 1024
+        cpu        = 500
+        memory     = 512
+        memory_max = 1024
       }
     }
   }

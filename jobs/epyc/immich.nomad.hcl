@@ -76,8 +76,9 @@ EOF
       }
 
       resources {
-        cpu    = 1000
-        memory = 2048
+        cpu        = 1000
+        memory     = 1024
+        memory_max = 2048
       }
     }
 
@@ -117,8 +118,9 @@ EOF
       }
 
       resources {
-        cpu    = 4000
-        memory = 4096
+        cpu        = 4000
+        memory     = 2048
+        memory_max = 4096
       }
     }
 
@@ -142,8 +144,9 @@ EOF
       }
 
       resources {
-        cpu    = 4000
-        memory = 4096
+        cpu        = 4000
+        memory     = 2048
+        memory_max = 4096
       }
     }
   }

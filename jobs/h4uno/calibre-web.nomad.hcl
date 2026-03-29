@@ -58,8 +58,9 @@ job "calibre-web" {
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 500
+        memory     = 256
+        memory_max = 512
       }
     }
   }

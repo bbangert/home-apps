@@ -57,8 +57,9 @@ job "music-assistant" {
       }
 
       resources {
-        cpu    = 1000
-        memory = 8192
+        cpu        = 1000
+        memory     = 4096
+        memory_max = 8192
       }
     }
   }
