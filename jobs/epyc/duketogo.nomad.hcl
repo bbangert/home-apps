@@ -29,9 +29,7 @@ job "duketogo" {
       driver = "docker"
 
       config {
-        image   = "gcr.io/sigma-seer-289715/duketogo:d04aba49fe1ea41825a03933aeeb233bc3af56fd"
-        command = "node"
-        args    = ["./dist/main.js"]
+        image   = "ghcr.io/bbangert/duketogo_ex:latest"
       }
 
       volume_mount {
@@ -42,9 +40,8 @@ job "duketogo" {
       template {
         data        = <<EOF
 {{ with nomadVar "nomad/jobs/duketogo" -}}
-discord__token={{ .discord__token }}
-sentry__dsn={{ .sentry__dsn }}
-stonks__apiKey={{ .stonks__apiKey }}
+DISCORD_TOKEN={{ .DISCORD_TOKEN }}
+ALPHA_VANTAGE_API_KEY={{ .ALPHA_VANTAGE_API_KEY }}
 {{- end }}
 EOF
         destination = "secrets/duketogo.env"
@@ -52,16 +49,13 @@ EOF
       }
 
       env {
-        DEBUG                   = "bot*"
-        megahal__brainFile      = "/data/megahal.brn"
-        megahal__maxInputTokens = "1000"
-        megahal__maxOutputTokens = "1000"
+        MEGAHAL_BRAIN_FILE = "/data/megahal.brn"
       }
 
       resources {
         cpu        = 500
         memory     = 256
-        memory_max = 512
+        memory_max = 2048
       }
     }
   }

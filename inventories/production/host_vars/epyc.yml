@@ -10,6 +10,7 @@ homestar_service_ip: 192.168.2.35
 homestar_unifi_ip: 192.168.2.202
 
 docker_install_gcloud: true
+nomad_docker_auth_config: /root/.docker/config.json
 
 base_extra_firewall_ports:
   - { port: "8443", proto: tcp }

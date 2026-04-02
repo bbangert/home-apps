@@ -22,6 +22,11 @@ plugin "docker" {
       enabled = true
     }
     allow_privileged = true
+{% if nomad_docker_auth_config is defined %}
+    auth {
+      config = "{{ nomad_docker_auth_config }}"
+    }
+{% endif %}
   }
 }
 
