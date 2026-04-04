@@ -1,0 +1,1602 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_VICTORIAMETRICS",
+      "label": "VictoriaMetrics",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "uid": "cluster-overview",
+  "title": "Cluster Overview",
+  "description": "Single-pane overview of the entire homestar cluster",
+  "editable": false,
+  "version": 1,
+  "schemaVersion": 39,
+  "tags": ["cluster", "overview"],
+  "timezone": "browser",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "30s",
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "title": "Node Overview",
+      "type": "link",
+      "icon": "external link",
+      "url": "/d/node-overview",
+      "targetBlank": false
+    },
+    {
+      "title": "Docker Containers",
+      "type": "link",
+      "icon": "external link",
+      "url": "/d/docker-containers",
+      "targetBlank": false
+    },
+    {
+      "title": "Nomad Cluster",
+      "type": "link",
+      "icon": "external link",
+      "url": "/d/nomad-cluster",
+      "targetBlank": false
+    },
+    {
+      "title": "PostgreSQL",
+      "type": "link",
+      "icon": "external link",
+      "url": "/d/postgres",
+      "targetBlank": false
+    },
+    {
+      "title": "Frigate",
+      "type": "link",
+      "icon": "external link",
+      "url": "/d/frigate",
+      "targetBlank": false
+    }
+  ],
+  "liveNow": false,
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Node Health",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "epyc",
+      "description": "Uptime for epyc (Nomad server, 128 GB)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 2,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "red" },
+              { "value": 0, "color": "green" }
+            ]
+          },
+          "unit": "s",
+          "noValue": "DOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "system_uptime{host=\"epyc\"}",
+          "legendFormat": "Uptime"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "h4uno",
+      "description": "Uptime for h4uno (media libraries, NFS server, 32 GB)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 3,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "red" },
+              { "value": 0, "color": "green" }
+            ]
+          },
+          "unit": "s",
+          "noValue": "DOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "system_uptime{host=\"h4uno\"}",
+          "legendFormat": "Uptime"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "h4dos",
+      "description": "Uptime for h4dos (Plex, indexers, 32 GB)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 4,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "red" },
+              { "value": 0, "color": "green" }
+            ]
+          },
+          "unit": "s",
+          "noValue": "DOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "system_uptime{host=\"h4dos\"}",
+          "legendFormat": "Uptime"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "beelink1",
+      "description": "Uptime for beelink1 (Frigate surveillance, 8 GB)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 5,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "red" },
+              { "value": 0, "color": "green" }
+            ]
+          },
+          "unit": "s",
+          "noValue": "DOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "system_uptime{host=\"beelink1\"}",
+          "legendFormat": "Uptime"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "CPU & Memory",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 6,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU Usage %",
+      "description": "CPU usage across all nodes",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 7,
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "%",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "100 - cpu_usage_idle{cpu=\"cpu-total\"}",
+          "legendFormat": "{{ host }}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory - epyc",
+      "description": "Memory used vs total on epyc (128 GB)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 8,
+      "gridPos": { "h": 7, "w": 4, "x": 8, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Total" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "mem_used{host=\"epyc\"}",
+          "legendFormat": "Used"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "mem_total{host=\"epyc\"}",
+          "legendFormat": "Total"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory - h4uno",
+      "description": "Memory used vs total on h4uno (32 GB)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 9,
+      "gridPos": { "h": 7, "w": 4, "x": 12, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Total" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "mem_used{host=\"h4uno\"}",
+          "legendFormat": "Used"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "mem_total{host=\"h4uno\"}",
+          "legendFormat": "Total"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory - h4dos",
+      "description": "Memory used vs total on h4dos (32 GB)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 10,
+      "gridPos": { "h": 7, "w": 4, "x": 16, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Total" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "mem_used{host=\"h4dos\"}",
+          "legendFormat": "Used"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "mem_total{host=\"h4dos\"}",
+          "legendFormat": "Total"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory - beelink1",
+      "description": "Memory used vs total on beelink1 (8 GB)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 11,
+      "gridPos": { "h": 7, "w": 4, "x": 20, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Total" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "mem_used{host=\"beelink1\"}",
+          "legendFormat": "Used"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "mem_total{host=\"beelink1\"}",
+          "legendFormat": "Total"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Alerts & Backups",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "id": 15,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Firing Alerts",
+      "description": "Number of currently firing alert rules",
+      "datasource": { "type": "datasource", "uid": "grafana" },
+      "id": 16,
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1, "color": "yellow" },
+              { "value": 3, "color": "red" }
+            ]
+          },
+          "unit": "short",
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Firing$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "datasource", "uid": "grafana" },
+          "queryType": "alerting",
+          "panelId": 16
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Backup Age - epyc",
+      "description": "Time since last restic backup on epyc",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 17,
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 86400, "color": "yellow" },
+              { "value": 172800, "color": "red" }
+            ]
+          },
+          "unit": "s",
+          "noValue": "N/A"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "restic_backup_age_seconds{host=\"epyc\"}",
+          "legendFormat": "epyc"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Backup Age - h4uno",
+      "description": "Time since last restic backup on h4uno",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 18,
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 86400, "color": "yellow" },
+              { "value": 172800, "color": "red" }
+            ]
+          },
+          "unit": "s",
+          "noValue": "N/A"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "restic_backup_age_seconds{host=\"h4uno\"}",
+          "legendFormat": "h4uno"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Backup Age - h4dos",
+      "description": "Time since last restic backup on h4dos",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 19,
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 86400, "color": "yellow" },
+              { "value": 172800, "color": "red" }
+            ]
+          },
+          "unit": "s",
+          "noValue": "N/A"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "restic_backup_age_seconds{host=\"h4dos\"}",
+          "legendFormat": "h4dos"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Backup Age - beelink1",
+      "description": "Time since last restic backup on beelink1",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 20,
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 86400, "color": "yellow" },
+              { "value": 172800, "color": "red" }
+            ]
+          },
+          "unit": "s",
+          "noValue": "N/A"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "restic_backup_age_seconds{host=\"beelink1\"}",
+          "legendFormat": "beelink1"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Nomad Cluster",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "id": 21,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Running Allocations",
+      "description": "Number of running Nomad allocations",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 22,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 19 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "nomad_client_allocs_running{host=\"epyc\"}",
+          "legendFormat": "Running"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Blocked Allocations",
+      "description": "Number of blocked Nomad allocations",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 23,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 19 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1, "color": "yellow" },
+              { "value": 5, "color": "red" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "nomad_client_allocs_blocked{host=\"epyc\"}",
+          "legendFormat": "Blocked"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Migrating Allocations",
+      "description": "Number of migrating Nomad allocations",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 24,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 19 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "blue" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "nomad_client_allocs_migrating{host=\"epyc\"}",
+          "legendFormat": "Migrating"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Nomad Client Uptime",
+      "description": "Nomad client uptime on epyc",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 25,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 19 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" }
+            ]
+          },
+          "unit": "s",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "nomad_client_uptime{host=\"epyc\"}",
+          "legendFormat": "Uptime"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Containers",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 26,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Containers - epyc",
+      "description": "Running Docker containers on epyc",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 27,
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "docker_n_containers_running{host=\"epyc\"}",
+          "legendFormat": "epyc"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Containers - h4uno",
+      "description": "Running Docker containers on h4uno",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 28,
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "docker_n_containers_running{host=\"h4uno\"}",
+          "legendFormat": "h4uno"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Containers - h4dos",
+      "description": "Running Docker containers on h4dos",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 29,
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "docker_n_containers_running{host=\"h4dos\"}",
+          "legendFormat": "h4dos"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Containers - beelink1",
+      "description": "Running Docker containers on beelink1",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 30,
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "docker_n_containers_running{host=\"beelink1\"}",
+          "legendFormat": "beelink1"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Top Containers by Memory %",
+      "description": "Top 10 containers by memory usage percentage",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 31,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 50, "color": "yellow" },
+              { "value": 80, "color": "red" }
+            ]
+          },
+          "unit": "percent",
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "color-background" },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "container_name" },
+            "properties": [
+              { "id": "custom.width", "value": 200 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "host" },
+            "properties": [
+              { "id": "custom.width", "value": 100 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [
+              { "id": "custom.hidden", "value": true }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "Value", "desc": true }],
+        "footer": { "show": false }
+      },
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": { "sort": [{ "field": "Value", "desc": true }] }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "topk(10, docker_container_mem_usage_percent)",
+          "legendFormat": "",
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Storage",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "id": 32,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Storage - epyc",
+      "description": "Disk usage on epyc: solid lines = used, dashed lines = total capacity",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 33,
+      "gridPos": { "h": 7, "w": 6, "x": 0, "y": 33 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "/.* total/" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 2 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "/ total" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "/mnt/backups total" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_used{host=\"epyc\", path=\"/\"}",
+          "legendFormat": "/ used"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_total{host=\"epyc\", path=\"/\"}",
+          "legendFormat": "/ total"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_used{host=\"epyc\", path=\"/mnt/backups\"}",
+          "legendFormat": "/mnt/backups used"
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_total{host=\"epyc\", path=\"/mnt/backups\"}",
+          "legendFormat": "/mnt/backups total"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Storage - h4uno",
+      "description": "Disk usage on h4uno: solid line = used, dashed line = total capacity",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 34,
+      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 33 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "/ total" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_used{host=\"h4uno\", path=\"/\"}",
+          "legendFormat": "/ used"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_total{host=\"h4uno\", path=\"/\"}",
+          "legendFormat": "/ total"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Storage - h4dos",
+      "description": "Disk usage on h4dos: solid lines = used, dashed lines = total capacity",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 35,
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 33 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "/.* total/" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 2 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "/ total" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "/mnt/media total" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_used{host=\"h4dos\", path=\"/\"}",
+          "legendFormat": "/ used"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_total{host=\"h4dos\", path=\"/\"}",
+          "legendFormat": "/ total"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_used{host=\"h4dos\", path=\"/mnt/media\"}",
+          "legendFormat": "/mnt/media used"
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_total{host=\"h4dos\", path=\"/mnt/media\"}",
+          "legendFormat": "/mnt/media total"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Storage - beelink1",
+      "description": "Disk usage on beelink1: solid line = used, dashed line = total capacity",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 36,
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 33 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "/ total" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_used{host=\"beelink1\", path=\"/\"}",
+          "legendFormat": "/ used"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "disk_total{host=\"beelink1\", path=\"/\"}",
+          "legendFormat": "/ total"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Network",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
+      "id": 39,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Network Bandwidth by Node",
+      "description": "Network throughput per node (positive = received, negative = sent). Excludes loopback, docker, and bridge interfaces.",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 40,
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 41 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "Bps",
+          "min": null
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "rate(net_bytes_recv{interface!~\"lo|docker.*|br-.*|veth.*\"}[5m])",
+          "legendFormat": "{{ host }} recv"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "-rate(net_bytes_sent{interface!~\"lo|docker.*|br-.*|veth.*\"}[5m])",
+          "legendFormat": "{{ host }} sent"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Application Metrics",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 48 },
+      "id": 41,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Frigate Camera FPS",
+      "description": "Frames per second for each Frigate camera",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 42,
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 49 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "fps",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "frigate_camera_fps{host=\"beelink1\"}",
+          "legendFormat": "{{ camera }}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Intel GPU Frequency",
+      "description": "Actual GPU frequency on nodes with Intel GPUs (h4uno for media libraries, h4dos for Plex transcoding)",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 43,
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 49 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "MHz",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "intel_gpu_frequency_actual{host=~\"h4uno|h4dos\"}",
+          "legendFormat": "{{ host }}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "PostgreSQL Connections",
+      "description": "Active PostgreSQL connections on epyc",
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "id": 44,
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 49 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+          "expr": "postgresql_numbackends{host=\"epyc\"}",
+          "legendFormat": "{{ db }}"
+        }
+      ]
+    }
+  ]
+}
