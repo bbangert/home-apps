@@ -30,7 +30,7 @@ job "prowlarr" {
       driver = "docker"
 
       config {
-        image        = "lscr.io/linuxserver/prowlarr:2.3.0"
+        image        = "lscr.io/linuxserver/prowlarr:2.3.5"
         network_mode = "host"
         ports        = ["http"]
       }
