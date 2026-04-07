@@ -26,7 +26,7 @@ job "authentik" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/goauthentik/server:2026.2.2"
+        image        = "ghcr.io/goauthentik/server:2026.2.1"
         network_mode = "host"
         ports        = ["http"]
         args         = ["server"]
@@ -73,7 +73,7 @@ EOF
       driver = "docker"
 
       config {
-        image        = "ghcr.io/goauthentik/server:2026.2.2"
+        image        = "ghcr.io/goauthentik/server:2026.2.1"
         network_mode = "host"
         args         = ["worker"]
       }
