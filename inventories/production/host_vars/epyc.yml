@@ -59,6 +59,8 @@ nomad_host_volumes:
     path: /srv/paperless/media
   - name: paperless-consume
     path: /srv/paperless/consume
+  - name: paperless-ai-data
+    path: /srv/paperless-ai/data
 
 caddy_routes:
   - hostname: auth.groovie.org
@@ -105,6 +107,8 @@ caddy_routes:
     backend: 192.168.2.39:9696
   - hostname: paperless.groovie.org
     backend: localhost:8010
+  - hostname: paperless-ai.groovie.org
+    backend: localhost:3002
 
 telegraf_collect_docker: true
 telegraf_collect_postgres: true

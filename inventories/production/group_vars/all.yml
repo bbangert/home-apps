@@ -57,6 +57,8 @@ all_apps:
   - zone: groovie.org
     name: paperless
   - zone: groovie.org
+    name: paperless-ai
+  - zone: groovie.org
     name: smtp-relay
 
 public_apps:

@@ -130,7 +130,7 @@ h4uno exports `/srv/data` over NFS. h4dos mounts it at `/mnt/media`. This gives 
 
 ### Databases
 
-PostgreSQL 16 runs on epyc. Apps that need a database (Authentik, Immich, Sonarr, Radarr, Lidarr, Prowlarr, Linkwarden) connect via `localhost` since they also run on epyc, or use the epyc IP for remote nodes. Database creation and role grants are handled by the `postgres` role.
+PostgreSQL 17 runs on epyc. Apps that need a database (Authentik, Immich, Paperless-ngx, Sonarr, Radarr, Lidarr, Prowlarr, Linkwarden) connect via `localhost` since they also run on epyc, or use the epyc IP for remote nodes. Database creation and role grants are handled by the `postgres` role.
 
 Immich has its own dedicated PostgreSQL instance (with pgvecto.rs) running as a Nomad job, separate from the shared PostgreSQL server.
 

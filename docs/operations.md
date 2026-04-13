@@ -101,7 +101,7 @@ When you change an Ansible role or host vars:
 
 PostgreSQL 17 runs on epyc as a system service (not in a container). It serves as the shared database for most apps. Immich is the exception — it runs its own dedicated PostgreSQL instance as a Nomad job (with the pgvecto.rs extension).
 
-Apps using the shared PostgreSQL: Authentik, Sonarr, Radarr, Lidarr, Prowlarr, Linkwarden.
+Apps using the shared PostgreSQL: Authentik, Paperless-ngx, Sonarr, Radarr, Lidarr, Prowlarr, Linkwarden.
 
 ### Connecting
 

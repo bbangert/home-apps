@@ -1079,54 +1079,53 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "value": null, "color": "green" },
-              { "value": 50, "color": "yellow" },
-              { "value": 80, "color": "red" }
-            ]
-          },
-          "unit": "percent",
           "custom": {
             "align": "auto",
-            "cellOptions": { "type": "color-background" },
             "filterable": false
           }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "container_name" },
+            "matcher": { "id": "byName", "options": "Container" },
             "properties": [
               { "id": "custom.width", "value": 200 }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "host" },
+            "matcher": { "id": "byName", "options": "Host" },
             "properties": [
-              { "id": "custom.width", "value": 100 }
+              { "id": "custom.width", "value": 80 }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "Time" },
+            "matcher": { "id": "byName", "options": "Memory %" },
             "properties": [
-              { "id": "custom.hidden", "value": true }
+              { "id": "unit", "value": "percent" },
+              { "id": "decimals", "value": 1 },
+              { "id": "color", "value": { "mode": "thresholds" } },
+              { "id": "thresholds", "value": {
+                "mode": "absolute",
+                "steps": [
+                  { "value": null, "color": "transparent" },
+                  { "value": 50, "color": "yellow" },
+                  { "value": 80, "color": "red" }
+                ]
+              }},
+              { "id": "custom.cellOptions", "value": {
+                "type": "gauge",
+                "mode": "basic"
+              }},
+              { "id": "min", "value": 0 },
+              { "id": "max", "value": 100 }
             ]
           }
         ]
       },
       "options": {
         "showHeader": true,
-        "sortBy": [{ "displayName": "Value", "desc": true }],
+        "sortBy": [{ "displayName": "Memory %", "desc": true }],
         "footer": { "show": false }
       },
-      "transformations": [
-        {
-          "id": "sortBy",
-          "options": { "sort": [{ "field": "Value", "desc": true }] }
-        }
-      ],
       "targets": [
         {
           "refId": "A",
@@ -1135,6 +1134,31 @@
           "legendFormat": "",
           "instant": true,
           "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": ["container_name", "host", "Value"]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "container_name": "Container",
+              "host": "Host",
+              "Value": "Memory %"
+            },
+            "indexByName": {
+              "container_name": 0,
+              "host": 1,
+              "Value": 2
+            }
+          }
         }
       ]
     },

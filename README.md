@@ -172,8 +172,11 @@ Caddy runs on epyc and terminates TLS for all apps. Routes are defined in `host_
 | App | Node | Port | Description |
 |-----|------|------|-------------|
 | [Authentik](https://goauthentik.io/) | epyc | 9000 | Identity provider, SSO/OAuth2 |
+| [Atuin](https://atuin.sh/) | epyc | 8888 | Shell history sync server |
 | [Immich](https://immich.app/) | epyc | 2283 | Photo & video library |
 | [ownCloud Infinite Scale](https://owncloud.dev/ocis/) | epyc | 9200 | File sync & sharing |
+| [Paperless-ngx](https://docs.paperless-ngx.com/) | epyc | 8010 | Document management & OCR |
+| [Paperless-AI](https://github.com/clusterzx/paperless-ai) | epyc | 3002 | AI-powered document classification for Paperless-ngx |
 | [Grafana](https://grafana.com/) | epyc | 3001 | Dashboards & alerting |
 | [VictoriaMetrics](https://victoriametrics.com/) | epyc | 8428 | Metrics storage |
 | [Valkey](https://valkey.io/) | epyc | 6379 | Redis-compatible cache |
@@ -183,7 +186,7 @@ Caddy runs on epyc and terminates TLS for all apps. Routes are defined in `host_
 | [Linkwarden](https://linkwarden.app/) | epyc | 3000 | Bookmark manager |
 | [FreshRSS](https://freshrss.org/) | epyc | 8082 | RSS reader |
 | [The Lounge](https://thelounge.chat/) | epyc | 9090 | IRC client |
-| [Duke To Go](https://github.com/bbangert/duketogo) | epyc | 8888 | URL shortener |
+| [Duke To Go](https://github.com/bbangert/duketogo) | epyc | — | Discord bot |
 | [Paste](https://github.com/bbangert/paste) | epyc | 6543 | Pastebin |
 | [Unifi Controller](https://ui.com/) | epyc | 8443 | Network management |
 | [SMTP Relay](https://github.com/bbangert/smtp-relay) | epyc | 25 | Mail relay |
