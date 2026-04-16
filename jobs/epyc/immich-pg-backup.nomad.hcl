@@ -73,7 +73,7 @@ EOF
       }
 
       config {
-        image        = "amazon/aws-cli:2.34.24"
+        image        = "amazon/aws-cli:2.34.31"
         volumes      = ["/mnt/backups/immich-pg:/backups:ro"]
         entrypoint   = ["/bin/sh"]
         args         = ["-c", "aws s3 sync /backups/ s3://homestar-cloudnative-pg/immich-pg-dumps/ --exclude '*' --include '*.dump'"]
