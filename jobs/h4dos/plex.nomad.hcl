@@ -36,7 +36,7 @@ job "plex" {
       driver = "docker"
 
       config {
-        image        = "lscr.io/linuxserver/plex:1.43.0"
+        image        = "lscr.io/linuxserver/plex:1.43.1"
         network_mode = "host"
         ports        = ["http"]
         devices      = [{
