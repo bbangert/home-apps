@@ -42,6 +42,7 @@ job "frigate" {
         network_mode = "host"
         ports        = ["http", "rtsp", "webrtc"]
         privileged   = true
+        shm_size     = 268435456
         volumes = [
           "/dev/bus/usb:/dev/bus/usb",
           "/dev/dri:/dev/dri",
@@ -82,7 +83,7 @@ EOF
       resources {
         cpu        = 2000
         memory     = 1536
-        memory_max = 2048
+        memory_max = 4096
       }
     }
   }
