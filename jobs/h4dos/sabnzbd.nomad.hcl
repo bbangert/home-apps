@@ -36,7 +36,7 @@ job "sabnzbd" {
       driver = "docker"
 
       config {
-        image        = "lscr.io/linuxserver/sabnzbd:4.5.5"
+        image        = "lscr.io/linuxserver/sabnzbd:5.0.1"
         network_mode = "host"
         ports        = ["http"]
       }
