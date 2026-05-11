@@ -31,7 +31,7 @@ job "vaultwarden" {
       driver = "docker"
 
       config {
-        image        = "vaultwarden/server:1.35.8"
+        image        = "vaultwarden/server:1.36.0"
         network_mode = "host"
         ports        = ["http", "websocket"]
       }
