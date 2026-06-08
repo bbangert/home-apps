@@ -17,6 +17,19 @@ The examples below assume these are set.
 nomad job run jobs/epyc/grafana.nomad.hcl
 ```
 
+### Deploying all jobs
+
+Use `scripts/deploy-all.sh` to plan or deploy every job in the `jobs/` tree
+(handy after merging Renovate image bumps). It defaults to `plan`, so a bare
+invocation only previews changes:
+
+```bash
+./scripts/deploy-all.sh                 # plan ALL jobs (no changes)
+./scripts/deploy-all.sh run             # deploy ALL jobs (unchanged jobs are a no-op)
+./scripts/deploy-all.sh run -n h4dos    # only jobs under jobs/h4dos/
+./scripts/deploy-all.sh run -m          # monitor each rollout instead of -detach
+```
+
 ### Running an Ansible playbook
 
 Full site playbook (requires 1Password auth for restic secrets):
