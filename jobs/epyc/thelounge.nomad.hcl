@@ -30,7 +30,7 @@ job "thelounge" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/thelounge/thelounge:4.4.3"
+        image        = "ghcr.io/thelounge/thelounge:4.5.0"
         network_mode = "host"
         ports        = ["http"]
       }
