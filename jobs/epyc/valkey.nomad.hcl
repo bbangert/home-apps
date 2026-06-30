@@ -29,13 +29,19 @@ job "valkey" {
         image        = "valkey/valkey:9-alpine"
         network_mode = "host"
         ports        = ["redis"]
-        args         = ["valkey-server", "--bind", "127.0.0.1", "--port", "6379"]
+        args = [
+          "valkey-server",
+          "--bind", "127.0.0.1",
+          "--port", "6379",
+          "--maxmemory", "900mb",
+          "--maxmemory-policy", "allkeys-lru",
+        ]
       }
 
       resources {
         cpu        = 500
-        memory     = 256
-        memory_max = 512
+        memory     = 1024
+        memory_max = 1024
       }
     }
   }
