@@ -61,6 +61,8 @@ all_apps:
     name: paperless-ai
   - zone: groovie.org
     name: smtp-relay
+  - zone: groovie.org
+    name: notes
 
 public_apps:
   - zone: groovie.org
@@ -73,6 +75,8 @@ public_apps:
     name: link
   - zone: ofcode.org
     name: paste
+  - zone: groovie.org
+    name: notes
 
 onepassword_item_paths:
   cloudflare_api_token: op://HomeCluster/cloudflare/API_TOKEN
