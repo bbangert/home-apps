@@ -52,6 +52,10 @@
   connection: local
   gather_facts: false
   become: false
+  # Use the project .venv interpreter — it has httpx/required deps for the
+  # API-based DNS modules, which the Homebrew Ansible's embedded Python lacks.
+  vars:
+    ansible_python_interpreter: "{{ playbook_dir }}/../.venv/bin/python"
   tags: [cloudflare-dns]
   roles:
     - role: cloudflare-dns
@@ -77,6 +81,10 @@
   connection: local
   gather_facts: false
   become: false
+  # Use the project .venv interpreter — it has httpx/required deps for the
+  # API-based DNS modules, which the Homebrew Ansible's embedded Python lacks.
+  vars:
+    ansible_python_interpreter: "{{ playbook_dir }}/../.venv/bin/python"
   tags: [opnsense-dns]
   roles:
     - role: opnsense-dns

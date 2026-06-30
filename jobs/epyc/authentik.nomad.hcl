@@ -102,6 +102,14 @@ EOF
         AUTHENTIK_EMAIL__USE_SSL   = "false"
         AUTHENTIK_EMAIL__FROM      = "Authentik <homestar@groovie.org>"
         AUTHENTIK_SKIP_MIGRATIONS  = "true"
+
+        # Both tasks share the host network namespace (network_mode = host), so
+        # the worker must not bind the server's listen ports (9000/9443/9300) or
+        # it wins the race and answers web traffic with empty 200s. Relocate the
+        # worker's listeners to loopback-only alternate ports.
+        AUTHENTIK_LISTEN__HTTP     = "127.0.0.1:9001"
+        AUTHENTIK_LISTEN__HTTPS    = "127.0.0.1:9444"
+        AUTHENTIK_LISTEN__METRICS  = "127.0.0.1:9301"
       }
 
       resources {
