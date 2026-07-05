@@ -9,6 +9,11 @@
   @{{ route.hostname | replace('.', '_') }} host {{ route.hostname }}
   handle @{{ route.hostname | replace('.', '_') }} {
     reverse_proxy {{ route.backend }} {
+      # Cloudflare terminates TLS at the edge and the tunnel reaches this
+      # listener over plain HTTP, so advertise the real client scheme to
+      # backends. Without this, scheme-strict apps (e.g. ocis) see http and
+      # 308-redirect to https, causing a redirect loop over the WAN path.
+      header_up X-Forwarded-Proto https
 {% if route.backend.startswith('https://') %}
       header_up Host {hostport}
       transport http {
