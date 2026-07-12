@@ -113,6 +113,8 @@ caddy_routes:
     backend: localhost:3002
   - hostname: notes.groovie.org
     backend: localhost:3300
+  - hostname: pinchflat.groovie.org
+    backend: 192.168.2.36:8945
 
 telegraf_collect_docker: true
 telegraf_collect_postgres: true
