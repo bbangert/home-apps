@@ -14,6 +14,7 @@ base_extra_firewall_ports:
   - { port: "8097", proto: tcp }
   - { port: "8083", proto: tcp }
   - { port: "8085", proto: tcp }
+  - { port: "8945", proto: tcp }
   - { port: "25600", proto: tcp }
 
 nfs_role: server
@@ -52,6 +53,10 @@ nomad_host_volumes:
     path: /srv/calibre-web/config
   - name: music-assistant-config
     path: /srv/music-assistant/config
+  - name: pinchflat-config
+    path: /srv/pinchflat/config
+  - name: data-music-youtube
+    path: /srv/data/music/youtube
   - name: data-music
     path: /srv/data/music
   - name: data-books

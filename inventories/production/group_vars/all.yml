@@ -63,6 +63,8 @@ all_apps:
     name: smtp-relay
   - zone: groovie.org
     name: notes
+  - zone: groovie.org
+    name: pinchflat
 
 public_apps:
   - zone: groovie.org
