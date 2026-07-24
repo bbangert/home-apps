@@ -42,7 +42,7 @@ job "paperless" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/paperless-ngx/paperless-ngx:2.20.15"
+        image        = "ghcr.io/paperless-ngx/paperless-ngx:3.0.2"
         network_mode = "host"
         ports        = ["http"]
       }
