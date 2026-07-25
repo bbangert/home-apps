@@ -30,7 +30,7 @@ job "hedgedoc" {
       driver = "docker"
 
       config {
-        image        = "quay.io/hedgedoc/hedgedoc:1.11.0"
+        image        = "quay.io/hedgedoc/hedgedoc:1.11.1"
         network_mode = "host"
         ports        = ["http"]
       }
