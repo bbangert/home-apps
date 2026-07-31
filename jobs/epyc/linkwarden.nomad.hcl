@@ -30,7 +30,7 @@ job "linkwarden" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/linkwarden/linkwarden:v2.15.1"
+        image        = "ghcr.io/linkwarden/linkwarden:v2.16.0"
         network_mode = "host"
         ports        = ["http"]
       }
