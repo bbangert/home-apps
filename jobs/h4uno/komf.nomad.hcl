@@ -30,7 +30,7 @@ job "komf" {
       driver = "docker"
 
       config {
-        image        = "sndxr/komf:1.7.1"
+        image        = "sndxr/komf:2.0.1"
         network_mode = "host"
         ports        = ["http"]
       }
