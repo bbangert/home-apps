@@ -28,7 +28,7 @@ job "immich-pg-backup" {
       driver = "docker"
 
       config {
-        image        = "postgres:17-alpine"
+        image        = "postgres:18-alpine"
         network_mode = "host"
         volumes      = ["/mnt/backups/immich-pg:/backups"]
         command      = "/bin/sh"
