@@ -69,7 +69,7 @@ job "pinchflat" {
       driver = "docker"
 
       config {
-        image        = "brainicism/bgutil-ytdlp-pot-provider:1.3.2"
+        image        = "brainicism/bgutil-ytdlp-pot-provider:2.0.0"
         network_mode = "host"
       }
 
