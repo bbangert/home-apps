@@ -65,6 +65,8 @@ all_apps:
     name: notes
   - zone: groovie.org
     name: pinchflat
+  - zone: groovie.org
+    name: openarchiver
 
 public_apps:
   - zone: groovie.org

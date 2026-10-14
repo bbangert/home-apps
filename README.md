@@ -177,6 +177,7 @@ Caddy runs on epyc and terminates TLS for all apps. Routes are defined in `host_
 | [ownCloud Infinite Scale](https://owncloud.dev/ocis/) | epyc | 9200 | File sync & sharing |
 | [Paperless-ngx](https://docs.paperless-ngx.com/) | epyc | 8010 | Document management & OCR |
 | [Paperless-AI](https://github.com/clusterzx/paperless-ai) | epyc | 3002 | AI-powered document classification for Paperless-ngx |
+| [Open Archiver](https://openarchiver.com/) | epyc | 3400 | Email archiving & search |
 | [Grafana](https://grafana.com/) | epyc | 3001 | Dashboards & alerting |
 | [VictoriaMetrics](https://victoriametrics.com/) | epyc | 8428 | Metrics storage |
 | [Valkey](https://valkey.io/) | epyc | 6379 | Redis-compatible cache |

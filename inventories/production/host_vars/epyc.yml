@@ -63,6 +63,12 @@ nomad_host_volumes:
     path: /srv/paperless-ai/data
   - name: hedgedoc-uploads
     path: /srv/hedgedoc/uploads
+  - name: openarchiver-data
+    path: /srv/openarchiver/data
+  - name: openarchiver-meili
+    path: /srv/openarchiver/meili
+  - name: openarchiver-valkey
+    path: /srv/openarchiver/valkey
 
 caddy_routes:
   - hostname: auth.groovie.org
@@ -115,6 +121,8 @@ caddy_routes:
     backend: localhost:3300
   - hostname: pinchflat.groovie.org
     backend: 192.168.2.36:8945
+  - hostname: openarchiver.groovie.org
+    backend: localhost:3400
 
 telegraf_collect_docker: true
 telegraf_collect_postgres: true
