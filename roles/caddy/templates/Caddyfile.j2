@@ -28,6 +28,13 @@
 {% for route in caddy_routes %}
 
 {{ route.hostname }} {
+  # opnSense redirects outbound port 53 to Unbound, so Caddy's check of the
+  # authoritative nameservers sees Unbound's cache (often a stale negative
+  # answer) and times out. Skip the check and wait a fixed delay instead.
+  tls {
+    propagation_timeout -1
+    propagation_delay 30s
+  }
   reverse_proxy {{ route.backend }} {
 {% if route.backend.startswith('https://') %}
     header_up Host {hostport}
