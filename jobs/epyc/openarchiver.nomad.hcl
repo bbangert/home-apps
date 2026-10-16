@@ -53,7 +53,7 @@ job "openarchiver" {
       }
 
       config {
-        image        = "valkey/valkey:8-alpine"
+        image        = "valkey/valkey:9-alpine"
         network_mode = "host"
         ports        = ["redis"]
         args         = ["valkey-server", "/secrets/valkey.conf"]
