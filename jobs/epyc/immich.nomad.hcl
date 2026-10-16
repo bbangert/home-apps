@@ -128,7 +128,7 @@ EOF
       driver = "docker"
 
       config {
-        image        = "ghcr.io/immich-app/immich-machine-learning:v3.3.1"
+        image        = "ghcr.io/immich-app/immich-machine-learning:v3.3.3"
         network_mode = "host"
         ports        = ["ml"]
       }
