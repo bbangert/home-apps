@@ -38,7 +38,7 @@ job "frigate" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/blakeblackshear/frigate:0.18.0"
+        image        = "ghcr.io/blakeblackshear/frigate:0.18.2"
         network_mode = "host"
         ports        = ["http", "rtsp", "webrtc"]
         privileged   = true
