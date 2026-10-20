@@ -154,7 +154,7 @@ EOF
       driver = "docker"
 
       config {
-        image        = "logiclabshq/open-archiver:v0.6.0"
+        image        = "logiclabshq/open-archiver:v0.6.1"
         network_mode = "host"
         ports        = ["http", "api"]
       }
