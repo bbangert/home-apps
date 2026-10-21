@@ -30,7 +30,7 @@ job "victoriametrics" {
       driver = "docker"
 
       config {
-        image        = "victoriametrics/victoria-metrics:v1.154.0"
+        image        = "victoriametrics/victoria-metrics:v1.154.1"
         network_mode = "host"
         ports        = ["http"]
         args         = ["-storageDataPath=/victoria-metrics-data", "-retentionPeriod=12", "-httpListenAddr=:8428"]
