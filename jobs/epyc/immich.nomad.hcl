@@ -86,7 +86,7 @@ EOF
       driver = "docker"
 
       config {
-        image        = "ghcr.io/immich-app/immich-server:v3.3.3"
+        image        = "ghcr.io/immich-app/immich-server:v3.3.5"
         network_mode = "host"
         ports        = ["http"]
       }
@@ -128,7 +128,7 @@ EOF
       driver = "docker"
 
       config {
-        image        = "ghcr.io/immich-app/immich-machine-learning:v3.3.1"
+        image        = "ghcr.io/immich-app/immich-machine-learning:v3.3.5"
         network_mode = "host"
         ports        = ["ml"]
       }
