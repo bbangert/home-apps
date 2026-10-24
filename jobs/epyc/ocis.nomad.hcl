@@ -30,7 +30,7 @@ job "ocis" {
       driver = "docker"
 
       config {
-        image        = "owncloud/ocis:8.2.1"
+        image        = "owncloud/ocis:8.2.2"
         network_mode = "host"
         ports        = ["http"]
       }
