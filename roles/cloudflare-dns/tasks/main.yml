@@ -11,3 +11,15 @@
   loop: "{{ public_apps }}"
   loop_control:
     label: "{{ item.name }}.{{ item.zone }}"
+
+- name: Remove CNAME records for retired public apps
+  community.general.cloudflare_dns:
+    zone: "{{ item.zone }}"
+    record: "{{ item.name }}"
+    type: CNAME
+    value: "{{ cloudflare_tunnel_cname }}"
+    api_token: "{{ cloudflare_api_token }}"
+    state: absent
+  loop: "{{ retired_public_apps | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}.{{ item.zone }}"

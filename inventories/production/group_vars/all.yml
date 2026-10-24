@@ -79,6 +79,9 @@ public_apps:
     name: link
   - zone: ofcode.org
     name: paste
+
+# Formerly public apps whose tunnel CNAME should be removed from Cloudflare.
+retired_public_apps:
   - zone: groovie.org
     name: notes
 
