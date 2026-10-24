@@ -118,6 +118,9 @@ EOF
         MEILI_HTTP_ADDR         = "127.0.0.1:7700"
         MEILI_NO_ANALYTICS      = "true"
         MEILI_SCHEDULE_SNAPSHOT = "86400"
+        # Migrate the on-disk database in place when the image's minor
+        # version changes; without this Meilisearch refuses to start.
+        MEILI_UPGRADE_DB = "true"
       }
 
       resources {
@@ -138,7 +141,7 @@ EOF
       }
 
       config {
-        image        = "apache/tika:3.3.1.0-full"
+        image        = "apache/tika:3.3.3.0-full"
         network_mode = "host"
         ports        = ["tika"]
       }
