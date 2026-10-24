@@ -30,7 +30,7 @@ job "freshrss" {
       driver = "docker"
 
       config {
-        image        = "freshrss/freshrss:1.30.1"
+        image        = "freshrss/freshrss:1.30.4"
         network_mode = "host"
         ports        = ["http"]
       }
