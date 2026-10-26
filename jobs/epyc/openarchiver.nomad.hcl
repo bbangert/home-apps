@@ -93,7 +93,7 @@ EOF
       }
 
       config {
-        image        = "getmeili/meilisearch:v1.55.0"
+        image        = "getmeili/meilisearch:v1.56.0"
         network_mode = "host"
         ports        = ["search"]
       }
