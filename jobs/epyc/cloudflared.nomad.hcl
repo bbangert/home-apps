@@ -23,7 +23,7 @@ job "cloudflared" {
       driver = "docker"
 
       config {
-        image        = "cloudflare/cloudflared:2026.10.4"
+        image        = "cloudflare/cloudflared:2026.10.5"
         network_mode = "host"
         args         = ["tunnel", "--config", "/local/config.yml", "run"]
       }
