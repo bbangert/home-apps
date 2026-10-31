@@ -122,6 +122,8 @@ caddy_routes:
   - hostname: openarchiver.groovie.org
     backend: localhost:3400
 
+caddy_allowed_countries: [US]
+
 telegraf_collect_docker: true
 telegraf_collect_postgres: true
 telegraf_collect_nomad: true

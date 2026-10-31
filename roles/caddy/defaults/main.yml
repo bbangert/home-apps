@@ -7,3 +7,6 @@ caddy_download_url: >-
 caddy_cloudflare_api_token: >-
   {{ lookup('pipe', 'op read ' + onepassword_item_paths.cloudflare_api_token) }}
 caddy_routes: []
+# ISO 3166 alpha-2 codes allowed through the cloudflared tunnel listener.
+# Empty disables the filter. LAN traffic to the TLS sites is not filtered.
+caddy_allowed_countries: []

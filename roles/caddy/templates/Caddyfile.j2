@@ -5,6 +5,15 @@
 # HTTP-only listener for cloudflared tunnel (localhost only, no TLS)
 :8780 {
   bind 127.0.0.1
+{% if caddy_allowed_countries %}
+  # Cloudflare sets CF-IPCountry at the edge. A missing header also fails the
+  # match, so this denies by default. Must stay the first handle block: handle
+  # blocks are mutually exclusive and evaluated in order.
+  @blocked_country not header_regexp CF-IPCountry ^({{ caddy_allowed_countries | join('|') }})$
+  handle @blocked_country {
+    respond 403
+  }
+{% endif %}
 {% for route in caddy_routes %}
   @{{ route.hostname | replace('.', '_') }} host {{ route.hostname }}
   handle @{{ route.hostname | replace('.', '_') }} {
