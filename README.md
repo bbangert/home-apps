@@ -144,7 +144,7 @@ External access is provided by a [Cloudflare tunnel](https://developers.cloudfla
 
 ### Internal DNS
 
-The opnSense router at `192.168.2.1` serves as the internal DNS server. The `opnsense-dns` Ansible role creates Unbound host overrides so all `*.groovie.org` and `*.ofcode.org` names resolve to the Caddy reverse proxy on epyc.
+The opnSense router at `192.168.2.1` serves as the internal DNS server. The `opnsense-dns` Ansible role creates Unbound host overrides so all `*.groovie.org` names resolve to the Caddy reverse proxy on epyc.
 
 ### Reverse Proxy
 
@@ -188,7 +188,6 @@ Caddy runs on epyc and terminates TLS for all apps. Routes are defined in `host_
 | [FreshRSS](https://freshrss.org/) | epyc | 8082 | RSS reader |
 | [The Lounge](https://thelounge.chat/) | epyc | 9090 | IRC client |
 | [Duke To Go](https://github.com/bbangert/duketogo) | epyc | — | Discord bot |
-| [Paste](https://github.com/bbangert/paste) | epyc | 6543 | Pastebin |
 | [Unifi Controller](https://ui.com/) | epyc | 8443 | Network management |
 | [SMTP Relay](https://github.com/bbangert/smtp-relay) | epyc | 25 | Mail relay |
 | [Plex](https://www.plex.tv/) | h4dos | 32400 | Media server (Intel QuickSync HW transcoding) |

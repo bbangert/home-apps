@@ -5,7 +5,6 @@ homestar_dns_servers:
 
 homestar_domains:
   - groovie.org
-  - ofcode.org
 
 nomad_datacenter: homestar
 nomad_version: "2.0.2"
@@ -53,8 +52,6 @@ all_apps:
     name: frigate
   - zone: groovie.org
     name: grafana
-  - zone: ofcode.org
-    name: paste
   - zone: groovie.org
     name: paperless
   - zone: groovie.org
@@ -77,13 +74,13 @@ public_apps:
     name: files
   - zone: groovie.org
     name: link
-  - zone: ofcode.org
-    name: paste
 
 # Formerly public apps whose tunnel CNAME should be removed from Cloudflare.
 retired_public_apps:
   - zone: groovie.org
     name: notes
+  - zone: ofcode.org
+    name: paste
 
 onepassword_item_paths:
   cloudflare_api_token: op://HomeCluster/cloudflare/API_TOKEN

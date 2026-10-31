@@ -87,8 +87,6 @@ caddy_routes:
     backend: localhost:9090
   - hostname: sh.groovie.org
     backend: localhost:8888
-  - hostname: paste.ofcode.org
-    backend: localhost:6543
   - hostname: grafana.groovie.org
     backend: localhost:3001
   - hostname: files.groovie.org

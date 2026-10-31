@@ -107,7 +107,7 @@ UFW is enabled on all nodes. The `base` role opens SSH (22) and Nomad ports (464
 
 ### DNS
 
-- **Internal:** The opnSense router (`192.168.2.1`) serves DNS. The `opnsense-dns` role creates Unbound host overrides so `*.groovie.org` and `*.ofcode.org` resolve to Caddy on epyc (`192.168.2.35`).
+- **Internal:** The opnSense router (`192.168.2.1`) serves DNS. The `opnsense-dns` role creates Unbound host overrides so `*.groovie.org` names resolve to Caddy on epyc (`192.168.2.35`).
 - **External:** The `cloudflare-dns` role creates CNAME records for apps in the `public_apps` list, pointing to the Cloudflare tunnel.
 
 ### Reverse proxy
