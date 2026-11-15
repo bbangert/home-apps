@@ -36,7 +36,7 @@ job "calibre-web" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/bjw-s-labs/calibre-web:0.6.26"
+        image        = "ghcr.io/bjw-s-labs/calibre-web:0.6.27"
         network_mode = "host"
         ports        = ["http"]
       }
