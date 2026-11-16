@@ -42,7 +42,7 @@ job "radarr" {
       driver = "docker"
 
       config {
-        image        = "lscr.io/linuxserver/radarr:6.4.4.10685-ls326"
+        image        = "lscr.io/linuxserver/radarr:7.0.3.10918-ls328"
         network_mode = "host"
         ports        = ["http"]
       }
