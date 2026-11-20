@@ -141,7 +141,7 @@ EOF
       }
 
       config {
-        image        = "apache/tika:3.3.3.0-full"
+        image        = "apache/tika:3.3.3.1-full"
         network_mode = "host"
         ports        = ["tika"]
       }
