@@ -36,7 +36,7 @@ job "music-assistant" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/music-assistant/server:2.10.12"
+        image        = "ghcr.io/music-assistant/server:2.10.13"
         network_mode = "host"
         ports        = ["http"]
       }
