@@ -42,7 +42,7 @@ job "lidarr" {
       driver = "docker"
 
       config {
-        image        = "lscr.io/linuxserver/lidarr:3.1.6.5079-ls49"
+        image        = "lscr.io/linuxserver/lidarr:3.1.6.5079-ls50"
         network_mode = "host"
         ports        = ["http"]
       }
