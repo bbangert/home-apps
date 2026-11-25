@@ -24,7 +24,7 @@ job "atuin" {
       driver = "docker"
 
       config {
-        image        = "ghcr.io/atuinsh/atuin:18.24.8"
+        image        = "ghcr.io/atuinsh/atuin:18.25.1"
         network_mode = "host"
         ports        = ["http"]
         args         = ["start"]
